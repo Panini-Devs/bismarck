@@ -40,10 +40,7 @@ async fn main() {
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
-            commands: vec![
-                about(),
-                user_info()
-            ],
+            commands: vec![about(), user_info()],
             skip_checks_for_owners: true,
             ..Default::default()
         })

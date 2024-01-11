@@ -3,14 +3,7 @@ use crate::{Context, Error};
 use git2::Repository;
 use poise::{serenity_prelude as serenity, CreateReply};
 
-use serenity::{
-    CreateEmbed,
-    CreateEmbedFooter,
-    CreateEmbedAuthor,
-    PremiumTier,
-    PremiumType,
-
-};
+use serenity::{CreateEmbed, CreateEmbedAuthor, CreateEmbedFooter, PremiumType};
 
 /// Returns bot information.
 #[poise::command(prefix_command, slash_command)]
@@ -104,10 +97,9 @@ pub async fn user_info(
         .field("Nitro Subscription", user_nitro, true)
         .footer(CreateEmbedFooter::new(format!("User ID: {user_id}")));
 
-    message
-        .channel_id
-        .send_message(&context, CreateMessage::new().embed(embed))
-        .await?;
+    let msg = CreateReply::default().embed(embed);
+
+    let _ = context.send(msg).await;
 
     Ok(())
 }
