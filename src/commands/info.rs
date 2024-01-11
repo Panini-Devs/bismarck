@@ -6,7 +6,13 @@ use poise::{serenity_prelude as serenity, CreateReply};
 use serenity::{CreateEmbed, CreateEmbedAuthor, CreateEmbedFooter, PremiumType};
 
 /// Returns bot information.
-#[poise::command(prefix_command, slash_command)]
+#[poise::command(
+    prefix_command,
+    slash_command,
+    required_permissions = "SEND_MESSAGES",
+    aliases("botinfo", "bi"),
+    track_edits
+)]
 pub async fn about(context: Context<'_>) -> Result<(), Error> {
     let repo = Repository::open(env!("CARGO_MANIFEST_DIR"))?;
 
