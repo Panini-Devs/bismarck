@@ -1,12 +1,11 @@
-use std::{env, sync::Mutex};
-use reqwest;
 use poise::serenity_prelude as serenity;
+use reqwest;
 use sqlx::SqlitePool;
+use std::env;
 
 struct Data {
-    reqwest: Mutex<reqwest::Client>,
+    reqwest: reqwest::Client,
     sqlite: SqlitePool,
-    
 } // User data, which is stored and accessible in all command invocations
 type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
@@ -46,9 +45,7 @@ async fn main() {
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
-            commands: vec![
-                age()
-            ],
+            commands: vec![age()],
             ..Default::default()
         })
         .token(token)
@@ -56,11 +53,12 @@ async fn main() {
         .setup(|ctx, _ready, framework| {
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
-                Ok(Data {reqwest: Mutex::new(reqwest::Client::new()), sqlite: database})
+                Ok(Data {
+                    reqwest: reqwest::Client::new(),
+                    sqlite: database,
+                })
             })
         });
 
     framework.run_autosharded().await.unwrap();
-
-
 }
