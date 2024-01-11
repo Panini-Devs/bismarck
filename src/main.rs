@@ -1,8 +1,13 @@
-use std::env;
-
+use std::{env, sync::Mutex};
+use reqwest;
 use poise::serenity_prelude as serenity;
+use sqlx::SqlitePool;
 
-struct Data {} // User data, which is stored and accessible in all command invocations
+struct Data {
+    reqwest: Mutex<reqwest::Client>,
+    sqlite: SqlitePool,
+    
+} // User data, which is stored and accessible in all command invocations
 type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
 
@@ -29,9 +34,21 @@ async fn main() {
     // In this case, a good default is setting the environment variable `RUST_LOG` to `debug`.
     tracing_subscriber::fmt::init();
 
+    let database = sqlx::sqlite::SqlitePoolOptions::new()
+        .max_connections(5)
+        .connect_with(
+            sqlx::sqlite::SqliteConnectOptions::new()
+                .filename("database.sqlite")
+                .create_if_missing(true),
+        )
+        .await
+        .expect("Couldn't connect to database");
+
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
-            commands: vec![age()],
+            commands: vec![
+                age()
+            ],
             ..Default::default()
         })
         .token(token)
@@ -39,7 +56,7 @@ async fn main() {
         .setup(|ctx, _ready, framework| {
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
-                Ok(Data {})
+                Ok(Data {reqwest: Mutex::new(reqwest::Client::new()), sqlite: database})
             })
         });
 
