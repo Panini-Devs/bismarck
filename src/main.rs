@@ -1,26 +1,20 @@
 use poise::serenity_prelude as serenity;
 use reqwest;
-use sqlx::SqlitePool;
 use std::env;
 
 mod commands;
+mod utilities;
 
+use crate::commands::{info::*, math::*, neko::*, settings::*, setup::*, utilities::*};
 
-use crate::commands::{
-    info::*,
-    math::*,
-    neko::*,
-    setup::*,
-    settings::*,
-    utilities::*
-};
+use sqlx::SqlitePool;
 
-struct Data {
-    reqwest: reqwest::Client,
-    sqlite: SqlitePool,
+pub struct Data {
+    pub reqwest: reqwest::Client,
+    pub sqlite: SqlitePool,
 } // User data, which is stored and accessible in all command invocations
-type Error = Box<dyn std::error::Error + Send + Sync>;
-type Context<'a> = poise::Context<'a, Data, Error>;
+pub type Error = Box<dyn std::error::Error + Send + Sync>;
+pub type Context<'a> = poise::Context<'a, Data, Error>;
 
 #[tokio::main]
 async fn main() {
@@ -47,8 +41,10 @@ async fn main() {
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
             commands: vec![
-                
+                about(),
+                user_info()
             ],
+            skip_checks_for_owners: true,
             ..Default::default()
         })
         .setup(|ctx, _ready, framework| {
@@ -65,5 +61,6 @@ async fn main() {
     let client = serenity::ClientBuilder::new(token, intents)
         .framework(framework)
         .await;
+
     client.unwrap().start_autosharded().await.unwrap();
 }
