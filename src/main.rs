@@ -27,6 +27,7 @@ async fn main() {
     dotenv::dotenv().expect("Failed to load .env file");
     // gets token, exits if no token
     let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
+    let intents = serenity::GatewayIntents::all();
 
     // Initialize the logger to use environment variables.
     //
@@ -48,8 +49,6 @@ async fn main() {
             commands: vec![age()],
             ..Default::default()
         })
-        .token(token)
-        .intents(serenity::GatewayIntents::all())
         .setup(|ctx, _ready, framework| {
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
@@ -58,7 +57,10 @@ async fn main() {
                     sqlite: database,
                 })
             })
-        });
+        }).build();
 
-    framework.run_autosharded().await.unwrap();
+    let client = serenity::ClientBuilder::new(token, intents)
+        .framework(framework)
+        .await;
+    client.unwrap().start_autosharded().await.unwrap();
 }
