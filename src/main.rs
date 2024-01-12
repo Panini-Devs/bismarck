@@ -45,8 +45,10 @@ async fn main() {
         .options(poise::FrameworkOptions {
             prefix_options: poise::PrefixFrameworkOptions {
                 prefix: Some("+".to_string()),
-                edit_tracker: Some(Arc::new(poise::EditTracker::for_timespan(std::time::Duration::from_secs(30)))),
+                // tracks edits for 60 seconds
+                edit_tracker: Some(Arc::new(poise::EditTracker::for_timespan(std::time::Duration::from_secs(60)))),
                 case_insensitive_commands: true,
+                mention_as_prefix: true,
                 ..Default::default()
             },
             commands: vec![
