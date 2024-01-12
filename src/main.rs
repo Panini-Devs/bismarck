@@ -1,8 +1,9 @@
-use std::{time::Duration, sync::Arc};
+use std::{time::Duration, sync::Arc, collections::HashMap};
 use poise::serenity_prelude as serenity;
 use reqwest;
-use tokio::time::sleep;
+use tokio::{time::sleep, sync::RwLock};
 use tracing::{error, info};
+use utilities::types::GuildSettings;
 use std::env;
 
 mod commands;
@@ -15,6 +16,7 @@ use sqlx::SqlitePool;
 pub struct Data {
     pub reqwest: reqwest::Client,
     pub sqlite: SqlitePool,
+    pub guild_data: RwLock<HashMap<u64, GuildSettings>>
 } // User data, which is stored and accessible in all command invocations
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
 pub type Context<'a> = poise::Context<'a, Data, Error>;
@@ -47,6 +49,27 @@ async fn main() {
         .await
         .expect("Couldn't run database migrations");
 
+    // Initiate guild settings
+    let guild_settings = sqlx::query!("SELECT * FROM guild_settings")
+        .fetch_all(&database)
+        .await
+        .expect("Couldn't fetch guild settings");
+
+    let mut guild_settings_map = HashMap::new();
+
+    for guild_setting in guild_settings {
+        let guild_id = guild_setting.guild_id as u64;
+        let guild_settings = GuildSettings {
+            prefix: guild_setting.prefix,
+            owner_id: guild_setting.owner_id as u64,
+            mute_type: guild_setting.mute_style,
+            mute_role: guild_setting.mute_role_id.unwrap_or_default() as u64,
+            default_mute_duration: guild_setting.mute_duration as u64,
+        };
+
+        guild_settings_map.insert(guild_id, guild_settings);
+    }
+
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
             prefix_options: poise::PrefixFrameworkOptions {
@@ -55,6 +78,7 @@ async fn main() {
                 edit_tracker: Some(Arc::new(poise::EditTracker::for_timespan(std::time::Duration::from_secs(60)))),
                 case_insensitive_commands: true,
                 mention_as_prefix: true,
+                execute_self_messages: false,
                 // dynamic prefix support
                 ..Default::default()
             },
@@ -74,6 +98,7 @@ async fn main() {
                 Ok(Data {
                     reqwest: reqwest::Client::new(),
                     sqlite: database,
+                    guild_data: RwLock::new(guild_settings_map)
                 })
             })
         })
