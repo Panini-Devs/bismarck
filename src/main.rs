@@ -41,6 +41,12 @@ async fn main() {
         .await
         .expect("Couldn't connect to database");
 
+    // Run migrations, which updates the database's schema to the latest version.
+    sqlx::migrate!("./migrations")
+        .run(&database)
+        .await
+        .expect("Couldn't run database migrations");
+
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
             prefix_options: poise::PrefixFrameworkOptions {
@@ -49,6 +55,7 @@ async fn main() {
                 edit_tracker: Some(Arc::new(poise::EditTracker::for_timespan(std::time::Duration::from_secs(60)))),
                 case_insensitive_commands: true,
                 mention_as_prefix: true,
+                // dynamic prefix support
                 ..Default::default()
             },
             commands: vec![
