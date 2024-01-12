@@ -19,3 +19,5 @@ Cargo.lock
 /target
 .env
 *.sqlite
+*.sqlite-shm
+*.sqlite-wal
