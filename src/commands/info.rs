@@ -11,7 +11,7 @@ use serenity::{CreateEmbed, CreateEmbedAuthor, CreateEmbedFooter, PremiumType};
     slash_command,
     required_permissions = "SEND_MESSAGES",
     aliases("botinfo", "bi"),
-    track_edits
+    category = "Info"
 )]
 pub async fn about(context: Context<'_>) -> Result<(), Error> {
     let repo = Repository::open(env!("CARGO_MANIFEST_DIR"))?;
@@ -66,7 +66,13 @@ pub async fn about(context: Context<'_>) -> Result<(), Error> {
 }
 
 /// Returns the account age of the selected user.
-#[poise::command(slash_command, prefix_command)]
+#[poise::command(
+    slash_command,
+    prefix_command,
+    required_permissions = "SEND_MESSAGES",
+    aliases("userinfo", "ui"),
+    category = "Info"
+)]
 pub async fn user_info(
     context: Context<'_>,
     #[description = "Selected user"] user: Option<serenity::User>,
@@ -110,13 +116,9 @@ pub async fn user_info(
 }
 
 /// Shows the user avatars.
-#[poise::command(
-    prefix_command, 
-    slash_command, 
-    required_permissions = "SEND_MESSAGES"
-)]
+#[poise::command(prefix_command, slash_command, required_permissions = "SEND_MESSAGES")]
 pub async fn user_avatars(
-    context: Context<'_>, 
+    context: Context<'_>,
     #[description = "Selected user."] user: Option<serenity::User>,
 ) -> Result<(), Error> {
     let user = match user {

@@ -1,4 +1,3 @@
-
 pub struct GuildSettings {
     pub prefix: String,
     pub owner_id: u64,

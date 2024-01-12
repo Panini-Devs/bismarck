@@ -1,10 +1,10 @@
-use std::{time::Duration, sync::Arc, collections::HashMap};
 use poise::serenity_prelude as serenity;
 use reqwest;
-use tokio::{time::sleep, sync::RwLock};
+use std::env;
+use std::{collections::HashMap, sync::Arc, time::Duration};
+use tokio::{sync::RwLock, time::sleep};
 use tracing::{error, info};
 use utilities::types::GuildSettings;
-use std::env;
 
 mod commands;
 mod utilities;
@@ -16,7 +16,8 @@ use sqlx::SqlitePool;
 pub struct Data {
     pub reqwest: reqwest::Client,
     pub sqlite: SqlitePool,
-    pub guild_data: RwLock<HashMap<u64, GuildSettings>>
+    pub guild_data: RwLock<HashMap<u64, GuildSettings>>,
+    pub shard_manager: Arc<serenity::ShardManager>,
 } // User data, which is stored and accessible in all command invocations
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
 pub type Context<'a> = poise::Context<'a, Data, Error>;
@@ -75,7 +76,9 @@ async fn main() {
             prefix_options: poise::PrefixFrameworkOptions {
                 prefix: Some("+".to_string()),
                 // tracks edits for 60 seconds
-                edit_tracker: Some(Arc::new(poise::EditTracker::for_timespan(std::time::Duration::from_secs(60)))),
+                edit_tracker: Some(Arc::new(poise::EditTracker::for_timespan(
+                    std::time::Duration::from_secs(60),
+                ))),
                 case_insensitive_commands: true,
                 mention_as_prefix: true,
                 execute_self_messages: false,
@@ -87,7 +90,8 @@ async fn main() {
                 user_info(),
                 user_avatars(),
                 multiply(),
-                add()
+                add(),
+                help(),
             ],
             skip_checks_for_owners: true,
             ..Default::default()
@@ -98,7 +102,8 @@ async fn main() {
                 Ok(Data {
                     reqwest: reqwest::Client::new(),
                     sqlite: database,
-                    guild_data: RwLock::new(guild_settings_map)
+                    guild_data: RwLock::new(guild_settings_map),
+                    shard_manager: framework.shard_manager().clone() //
                 })
             })
         })
@@ -106,7 +111,8 @@ async fn main() {
 
     let mut client = serenity::ClientBuilder::new(token, intents)
         .framework(framework)
-        .await.unwrap();
+        .await
+        .unwrap();
 
     // Setup shard manager
     let shard_manager = client.shard_manager.clone();
