@@ -1,9 +1,9 @@
+use crate::{Context, Error};
 use chrono::Duration;
 use chrono::Utc;
-use poise::CreateReply;
 use poise::samples::HelpConfiguration;
 use poise::serenity_prelude::CreateEmbed;
-use crate::{Context, Error};
+use poise::CreateReply;
 
 /// Show help message
 #[poise::command(prefix_command, track_edits, category = "Utility")]
@@ -38,11 +38,7 @@ You can edit your `?help` message to the bot and the bot will edit its response.
     Ok(())
 }
 
-#[poise::command(
-    prefix_command, 
-    slash_command, 
-    category = "Utility"
-)]
+#[poise::command(prefix_command, slash_command, category = "Utility")]
 pub async fn ping(context: Context<'_>) -> Result<(), Error> {
     let start = Utc::now();
     let start_ts = start.timestamp();
@@ -86,7 +82,8 @@ pub async fn ping(context: Context<'_>) -> Result<(), Error> {
         .color(0x008b_0000)
         .title("Discord Latency Information")
         .description(response);
-    ping.edit(context, CreateReply::default().embed(embed)).await?;
+    ping.edit(context, CreateReply::default().embed(embed))
+        .await?;
 
     Ok(())
 }

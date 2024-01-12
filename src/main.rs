@@ -1,9 +1,10 @@
 use poise::serenity_prelude as serenity;
-use reqwest;
 use std::env;
+use std::sync::atomic::AtomicBool;
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::{sync::RwLock, time::sleep};
 use tracing::{error, info};
+use utilities::event_handler::event_handler;
 use utilities::types::GuildSettings;
 
 mod commands;
@@ -18,6 +19,7 @@ pub struct Data {
     pub sqlite: SqlitePool,
     pub guild_data: RwLock<HashMap<u64, GuildSettings>>,
     pub shard_manager: Arc<serenity::ShardManager>,
+    pub is_loop_running: AtomicBool,
 } // User data, which is stored and accessible in all command invocations
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
 pub type Context<'a> = poise::Context<'a, Data, Error>;
@@ -94,6 +96,9 @@ async fn main() {
                 help(),
             ],
             skip_checks_for_owners: true,
+            event_handler: |context, event, framework, data| {
+                Box::pin(event_handler(context, event, framework, data))
+            },
             ..Default::default()
         })
         .setup(|ctx, _ready, framework| {
@@ -103,7 +108,8 @@ async fn main() {
                     reqwest: reqwest::Client::new(),
                     sqlite: database,
                     guild_data: RwLock::new(guild_settings_map),
-                    shard_manager: framework.shard_manager().clone() //
+                    shard_manager: framework.shard_manager().clone(),
+                    is_loop_running: AtomicBool::new(false),
                 })
             })
         })
