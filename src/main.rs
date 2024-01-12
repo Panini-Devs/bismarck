@@ -1,5 +1,8 @@
+use std::{time::Duration, sync::Arc};
 use poise::serenity_prelude as serenity;
 use reqwest;
+use tokio::time::sleep;
+use tracing::{error, info};
 use std::env;
 
 mod commands;
@@ -40,7 +43,19 @@ async fn main() {
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
-            commands: vec![about(), user_info()],
+            prefix_options: poise::PrefixFrameworkOptions {
+                prefix: Some("+".to_string()),
+                edit_tracker: Some(Arc::new(poise::EditTracker::for_timespan(std::time::Duration::from_secs(30)))),
+                case_insensitive_commands: true,
+                ..Default::default()
+            },
+            commands: vec![
+                about(),
+                user_info(),
+                user_avatars(),
+                multiply(),
+                add()
+            ],
             skip_checks_for_owners: true,
             ..Default::default()
         })
@@ -55,9 +70,39 @@ async fn main() {
         })
         .build();
 
-    let client = serenity::ClientBuilder::new(token, intents)
+    let mut client = serenity::ClientBuilder::new(token, intents)
         .framework(framework)
-        .await;
+        .await.unwrap();
 
-    client.unwrap().start_autosharded().await.unwrap();
+    // Setup shard manager
+    let shard_manager = client.shard_manager.clone();
+
+    // Start shard manager
+    tokio::spawn(async move {
+        tokio::signal::ctrl_c()
+            .await
+            .expect("Could not register ctrl+c handler");
+        shard_manager.shutdown_all().await;
+    });
+
+    let manager = client.shard_manager.clone();
+
+    tokio::spawn(async move {
+        loop {
+            sleep(Duration::from_secs(30)).await;
+
+            let shard_runners = manager.runners.lock().await;
+
+            for (id, runner) in shard_runners.iter() {
+                info!(
+                    "Shard ID {} is {} with a latency of {:?}",
+                    id, runner.stage, runner.latency,
+                );
+            }
+        }
+    });
+
+    if let Err(why) = client.start_autosharded().await {
+        error!("Client error: {:?}", why);
+    }
 }

@@ -65,8 +65,7 @@ pub async fn about(context: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
 
-/// Returns the account age of the selected u.
-///
+/// Returns the account age of the selected user.
 #[poise::command(slash_command, prefix_command)]
 pub async fn user_info(
     context: Context<'_>,
@@ -106,6 +105,57 @@ pub async fn user_info(
     let msg = CreateReply::default().embed(embed);
 
     let _ = context.send(msg).await;
+
+    Ok(())
+}
+
+/// Shows the user avatars.
+#[poise::command(
+    prefix_command, 
+    slash_command, 
+    required_permissions = "SEND_MESSAGES"
+)]
+pub async fn user_avatars(
+    context: Context<'_>, 
+    #[description = "Selected user."] user: Option<serenity::User>,
+) -> Result<(), Error> {
+    let user = match user {
+        Some(user) => user,
+        None => context.author().clone(),
+    };
+    let user_id = user.id;
+    let user_name = user.tag();
+    let guild = context.guild().unwrap().clone();
+    let guild_avatar = guild
+        .member(&context.http(), user_id)
+        .await
+        .unwrap()
+        .clone()
+        .avatar_url()
+        .unwrap_or("".to_string());
+
+    if !guild_avatar.is_empty() {
+        let embed = CreateEmbed::new()
+            .author(CreateEmbedAuthor::new(user_name.clone()).icon_url(user.face()))
+            .description(format!("Showing profile pictures of {}", user_name.clone()))
+            .image(user.face());
+
+        let embed2 = CreateEmbed::new()
+            .author(CreateEmbedAuthor::new(user_name.clone()).icon_url(guild_avatar.clone()))
+            .description(format!("Showing profile pictures of {}", user_name.clone()))
+            .image(guild_avatar.clone());
+
+        let msg = CreateReply::default().embed(embed).embed(embed2);
+        let _ = context.send(msg).await;
+    } else {
+        let embed = CreateEmbed::new()
+            .author(CreateEmbedAuthor::new(user_name.clone()).icon_url(user.face()))
+            .description(format!("Showing profile pictures of {user_name}"))
+            .image(user.face());
+
+        let msg = CreateReply::default().embed(embed);
+        let _ = context.send(msg).await;
+    }
 
     Ok(())
 }
