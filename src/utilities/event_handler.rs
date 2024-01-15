@@ -1,7 +1,6 @@
 use poise::serenity_prelude as serenity;
 use serenity::{ActivityData, CreateAllowedMentions};
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
+use std::sync::atomic::Ordering;
 use std::time::Duration;
 use tracing::info;
 
@@ -103,13 +102,14 @@ pub async fn event_handler(
             // shard event triggers.
             if !data.is_loop_running.load(Ordering::Relaxed) {
                 // And of course, we can run more than one thread at different timings.'
+                let guild_len = guilds.len();
+                let cloned = context.clone();
 
                 tokio::spawn(async move {
-                    let context = context;
                     loop {
-                        set_activity(&context, guilds.len());
+                        set_activity(&cloned, guild_len);
                         tokio::time::sleep(Duration::from_secs(3)).await;
-                        set_ad(&context);
+                        set_ad(&cloned);
                         tokio::time::sleep(Duration::from_secs(3)).await;
                     }
                 });
@@ -118,7 +118,7 @@ pub async fn event_handler(
                 data.is_loop_running.swap(true, Ordering::Relaxed);
             }
         }
-        serenity::FullEvent::GuildCreate { guild, is_new } => {
+        serenity::FullEvent::GuildCreate { guild, is_new: _ } => {
             // write into database and hashmap
             info!("Connected to guild: {}", guild.name);
             info!("Guild ID: {}", guild.id);
@@ -192,13 +192,13 @@ pub async fn event_handler(
     Ok(())
 }
 
-fn set_activity(context: &'static serenity::Context, guild_count: usize) {
+fn set_activity(context: &serenity::Context, guild_count: usize) {
     let presence = format!("Monitoring a total of {guild_count} guilds | -help");
 
     context.set_activity(Some(ActivityData::playing(presence)));
 }
 
-fn set_ad(context: &'static serenity::Context) {
+fn set_ad(context: &serenity::Context) {
     let presence = format!("On Shard {} | Flottenstützpunkt Hamburg", context.shard_id);
 
     context.set_activity(Some(ActivityData::listening(presence)));
