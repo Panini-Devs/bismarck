@@ -133,19 +133,21 @@ pub async fn event_handler(
                 (guild_id, owner_id)
             };
 
-            sqlx::query!(
+            let query = sqlx::query!(
                 "INSERT INTO guild_settings (
                     guild_id,
                     prefix,
                     owner_id
                 ) VALUES (?, ?, ?) ON CONFLICT DO NOTHING",
                 guild_id,
-                "-",
+                "+",
                 owner_id
             )
             .execute(&database)
             .await
             .unwrap();
+
+            info!("Query: {query:?}");
 
             let fetched_guild =
                 sqlx::query!("SELECT * FROM guild_settings WHERE guild_id = ?", guild_id,)
