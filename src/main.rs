@@ -85,6 +85,22 @@ async fn main() {
                 mention_as_prefix: true,
                 execute_self_messages: false,
                 // dynamic prefix support
+                dynamic_prefix: Some(|context| {
+                    Box::pin(async move {
+                        if let Some(guild_id) = context.guild_id {
+                            let guild_settings = {
+                                let data = context.data.guild_data.read().await;
+                                
+                                let guild_settings = data.get(&guild_id).unwrap();
+
+                            };
+                            let prefix = "+";
+                            Ok(Some(prefix.to_string()));
+                        }
+
+                        Ok(Some(String::from("+")))
+                    })
+                }),
                 ..Default::default()
             },
             commands: vec![
@@ -101,9 +117,9 @@ async fn main() {
             },
             ..Default::default()
         })
-        .setup(|ctx, _ready, framework| {
+        .setup(|context, _ready, framework| {
             Box::pin(async move {
-                poise::builtins::register_globally(ctx, &framework.options().commands).await?;
+                poise::builtins::register_globally(context, &framework.options().commands).await?;
                 Ok(Data {
                     reqwest: reqwest::Client::new(),
                     sqlite: database,
