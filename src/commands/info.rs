@@ -115,7 +115,7 @@ pub async fn user_info(
     Ok(())
 }
 
-/// Shows the user avatars.
+/// Shows the user's avatars.
 #[poise::command(prefix_command, slash_command, required_permissions = "SEND_MESSAGES")]
 pub async fn user_avatars(
     context: Context<'_>,

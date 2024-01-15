@@ -23,6 +23,7 @@ pub struct Data {
 } // User data, which is stored and accessible in all command invocations
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
 pub type Context<'a> = poise::Context<'a, Data, Error>;
+pub type PartialContext<'a> = poise::PartialContext<'a, Data, Error>;
 
 #[tokio::main]
 async fn main() {
@@ -85,6 +86,50 @@ async fn main() {
                 mention_as_prefix: true,
                 execute_self_messages: false,
                 // dynamic prefix support
+                dynamic_prefix: Some(|context: PartialContext | {
+                    Box::pin(async move {
+                        if let Some(guild_id) = context.guild_id {
+                            let pf = context.data.guild_data.read().await;
+
+                            let guild_settings = pf.get(&guild_id.get());
+                            match guild_settings {
+                                Some(guild_settings) => {
+                                    let _ = Ok::<Option<std::string::String>, Error>(Some(guild_settings.prefix.clone()));
+                                }
+                                None => {
+                                    // if no guild settings found,
+                                    // create new database entry and return default prefix
+                                    let (guild_id, owner_id) = {
+                                        let guild = guild_id
+                                            .to_guild_cached(&context.serenity_context.cache)
+                                            .unwrap();
+                                        (i64::from(guild.id), i64::from(guild.owner_id))
+                                    };
+
+                                    let database = &context.data.sqlite;
+
+                                    // create new guild settings into sqlite database as a failsafe
+                                    // in case guild_join did not load properly
+                                    sqlx::query!(
+                                        "INSERT INTO guild_settings (
+                                            guild_id,
+                                            prefix,
+                                            owner_id
+                                        ) VALUES (?, ?, ?)",
+                                        guild_id,
+                                        "+",
+                                        owner_id
+                                    )
+                                    .execute(database)
+                                    .await?;
+
+                                    let _ = Ok::<Option<std::string::String>, Error>(Some("+".to_string()));
+                                }
+                            }
+                        }
+                        Ok(Some("+".to_string()))
+                    })
+                }),
                 ..Default::default()
             },
             commands: vec![
@@ -101,9 +146,9 @@ async fn main() {
             },
             ..Default::default()
         })
-        .setup(|ctx, _ready, framework| {
+        .setup(|context, _ready, framework| {
             Box::pin(async move {
-                poise::builtins::register_globally(ctx, &framework.options().commands).await?;
+                poise::builtins::register_globally(context, &framework.options().commands).await?;
                 Ok(Data {
                     reqwest: reqwest::Client::new(),
                     sqlite: database,

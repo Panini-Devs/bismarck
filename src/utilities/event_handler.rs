@@ -102,12 +102,12 @@ pub async fn event_handler(
             // shard event triggers.
             if !data.is_loop_running.load(Ordering::Relaxed) {
                 // And of course, we can run more than one thread at different timings.'
+                let guild_len = guilds.len();
                 let cloned = context.clone();
-                let guild_num = guilds.len();
 
                 tokio::spawn(async move {
                     loop {
-                        set_activity(&cloned, guild_num);
+                        set_activity(&cloned, guild_len);
                         tokio::time::sleep(Duration::from_secs(3)).await;
                         set_ad(&cloned);
                         tokio::time::sleep(Duration::from_secs(3)).await;

@@ -31,7 +31,7 @@ You can edit your `?help` message to the bot and the bot will edit its response.
         show_context_menu_commands: true,
         ephemeral: true,
         extra_text_at_bottom,
-
+        include_description: true,
         ..Default::default()
     };
     poise::builtins::help(context, command.as_deref(), config).await?;
