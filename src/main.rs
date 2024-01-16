@@ -1,4 +1,5 @@
 use poise::serenity_prelude as serenity;
+use sqlx::sqlite::SqliteQueryResult;
 use std::env;
 use std::sync::atomic::AtomicBool;
 use std::{collections::HashMap, sync::Arc, time::Duration};
@@ -86,16 +87,15 @@ async fn main() {
                 mention_as_prefix: true,
                 execute_self_messages: false,
                 // dynamic prefix support
-                dynamic_prefix: Some(|context: PartialContext | {
+                dynamic_prefix: Some(|context: PartialContext| {
                     Box::pin(async move {
                         if let Some(guild_id) = context.guild_id {
                             let pf = context.data.guild_data.read().await;
 
                             let guild_settings = pf.get(&guild_id.get());
                             match guild_settings {
-                                Some(guild_settings) => {
-                                    let _ = Ok::<Option<std::string::String>, Error>(Some(guild_settings.prefix.clone()));
-                                }
+                                // we now return the result instead of throwing it away with `let _`
+                                Some(guild_settings) => Ok(Some(guild_settings.prefix.clone())),
                                 None => {
                                     // if no guild settings found,
                                     // create new database entry and return default prefix
@@ -110,24 +110,44 @@ async fn main() {
 
                                     // create new guild settings into sqlite database as a failsafe
                                     // in case guild_join did not load properly
-                                    sqlx::query!(
-                                        "INSERT INTO guild_settings (
+                                    let query_result: Result<SqliteQueryResult, sqlx::Error> =
+                                        sqlx::query!(
+                                            "INSERT INTO guild_settings (
                                             guild_id,
                                             prefix,
                                             owner_id
                                         ) VALUES (?, ?, ?)",
-                                        guild_id,
-                                        "+",
-                                        owner_id
-                                    )
-                                    .execute(database)
-                                    .await?;
-                                
-                                    let _ = Ok::<Option<std::string::String>, Error>(Some("+".to_string()));
+                                            guild_id,
+                                            "+",
+                                            owner_id
+                                        )
+                                        .execute(database)
+                                        .await;
+
+                                    // this one ended up a bit weird
+                                    // we have to convert the sqlx::Error to our type alias Error
+                                    // if query_result is Err
+                                    // otherwise we just return Ok(Some("+".to_string))
+                                    // the inner query result is unused, but can be used in the closure if desired
+                                    match query_result {
+                                        Ok(_query) => Ok(Some("+".to_string())),
+                                        Err(sqlx_error) => Err(Error::from(sqlx_error)),
+                                    }
+
+                                    // the below code does the same as the above a bit more idomatically
+                                    // go with whichever seems more readable to you
+
+                                    // query_result.map_or_else(
+                                    //     |sqlx_err| Err(Error::from(sqlx_err)),
+                                    //     |_query_result| Ok(Some("+".to_string())),
+                                    // )
                                 }
                             }
+                        } else {
+                            // previously, without the else block, we were throwing away
+                            // everything we did in the `if let` and always just returning Ok(Some("+".to_string()))
+                            Ok(Some("+".to_string()))
                         }
-                        Ok(Some("+".to_string()))
                     })
                 }),
                 ..Default::default()
