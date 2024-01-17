@@ -159,6 +159,9 @@ async fn main() {
                 multiply(),
                 add(),
                 help(),
+                ping(),
+                servers(),
+                prefix()
             ],
             skip_checks_for_owners: true,
             event_handler: |context, event, framework, data| {

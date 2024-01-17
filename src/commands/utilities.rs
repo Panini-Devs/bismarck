@@ -14,8 +14,6 @@ pub async fn help(
     mut command: Option<String>,
 ) -> Result<(), Error> {
     // This makes it possible to just make `help` a subcommand of any command
-    // `/fruit help` turns into `/help fruit`
-    // `/fruit help apple` turns into `/help fruit apple`
     if context.invoked_command_name() != "help" {
         command = match command {
             Some(c) => Some(format!("{} {}", context.invoked_command_name(), c)),
@@ -85,5 +83,11 @@ pub async fn ping(context: Context<'_>) -> Result<(), Error> {
     ping.edit(context, CreateReply::default().embed(embed))
         .await?;
 
+    Ok(())
+}
+
+#[poise::command(slash_command, prefix_command)]
+pub async fn servers(ctx: Context<'_>) -> Result<(), Error> {
+    poise::builtins::servers(ctx).await?;
     Ok(())
 }
