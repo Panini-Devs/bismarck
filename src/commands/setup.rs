@@ -29,10 +29,10 @@ pub async fn prefix(context: Context<'_>) -> Result<(), Error> {
 
                 context.send(builder).await.unwrap();
 
-                return Ok(());
+                Ok(())
             }
             None => {
-                return Err(Error::from("No guild settings found"));
+                Err(Error::from("No guild settings found"))
             }
         }
     } else {
@@ -45,7 +45,7 @@ pub async fn prefix(context: Context<'_>) -> Result<(), Error> {
 
         context.send(builder).await.unwrap();
 
-        return Ok(());
+        Ok(())
     }
 }
 
@@ -76,7 +76,7 @@ pub async fn set(context: Context<'_>, prefix: Option<String>) -> Result<(), Err
                     .to_guild_cached(context.cache())
                     .unwrap()
                     .owner_id
-                    .get() as u64,
+                    .get(),
                 mute_type: "timeout".to_string(),
                 mute_role: 0,
                 default_mute_duration: 60000,
