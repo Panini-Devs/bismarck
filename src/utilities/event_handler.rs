@@ -147,7 +147,22 @@ pub async fn event_handler(
             .await
             .unwrap();
 
-            info!("Query: {query:?}");
+            let bot_stat_query = sqlx::query!(
+                "INSERT INTO bot_stats (
+                    guild_id,
+                    commands_ran,
+                    songs_played
+                ) VALUES (?, ?, ?) ON CONFLICT DO NOTHING",
+                guild_id,
+                0,
+                0
+            )
+            .execute(&database)
+            .await
+            .unwrap();
+
+            info!("Guild Settings Query: {query:?}");
+            info!("Bot Stats Query: {bot_stat_query:?}");
 
             let fetched_guild =
                 sqlx::query!("SELECT * FROM guild_settings WHERE guild_id = ?", guild_id,)

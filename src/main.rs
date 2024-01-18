@@ -11,7 +11,7 @@ use utilities::types::GuildSettings;
 mod commands;
 mod utilities;
 
-use crate::commands::{info::*, math::*, neko::*, settings::*, setup::*, utilities::*};
+use crate::commands::{info::*, math::*, neko::*, owner::*, settings::*, setup::*, utilities::*};
 
 use sqlx::SqlitePool;
 
@@ -161,7 +161,8 @@ async fn main() {
                 help(),
                 ping(),
                 servers(),
-                prefix()
+                prefix(),
+                shutdown()
             ],
             skip_checks_for_owners: true,
             event_handler: |context, event, framework, data| {
