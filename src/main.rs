@@ -11,7 +11,7 @@ use utilities::types::GuildSettings;
 mod commands;
 mod utilities;
 
-use crate::commands::{info::*, math::*, neko::*, owner::*, settings::*, setup::*, utilities::*};
+use crate::commands::{info::*, math::*, owner::*, setup::*, utilities::*};
 
 use sqlx::SqlitePool;
 
