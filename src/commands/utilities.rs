@@ -20,9 +20,26 @@ pub async fn help(
             None => Some(context.invoked_command_name().to_string()),
         };
     }
-    let extra_text_at_bottom = "\
-Type `?help command` for more info on a command.
-You can edit your `?help` message to the bot and the bot will edit its response.";
+
+    let pf = context.data().guild_data.read().await;
+    let prefix = {
+        if let Some(guild_id) = context.guild_id() {
+            let guild_settings = pf.get(&guild_id.get());
+            if let Some(guild_settings) = guild_settings {
+                &guild_settings.prefix
+            } else {
+                "+"
+            }
+        } else {
+           "+"
+        }
+    };
+
+    let format = format!("\
+    Type `{prefix}help command` for more info on a command.
+    You can edit your `{prefix}help` message to the bot and the bot will edit its response.");
+
+    let extra_text_at_bottom = format.as_str();
 
     let config = HelpConfiguration {
         show_subcommands: true,
