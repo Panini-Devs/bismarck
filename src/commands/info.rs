@@ -1,3 +1,5 @@
+use std::sync::atomic::Ordering;
+
 use crate::utilities::git::{get_current_branch, get_head_revision};
 use crate::{Context, Error};
 use git2::Repository;
@@ -158,6 +160,38 @@ pub async fn user_avatars(
         let msg = CreateReply::default().embed(embed);
         let _ = context.send(msg).await;
     }
+
+    Ok(())
+}
+
+// Returns the bot's stats.
+#[poise::command(slash_command, prefix_command, required_permissions = "SEND_MESSAGES")]
+pub async fn bot_stats(context: Context<'_>) -> Result<(), Error> {
+    let guild = context.guild().unwrap().id;
+
+    let commands_ran = context.data().commands_ran.get(&guild.get()).unwrap();
+    let songs_played = context.data().songs_played.get(&guild.get()).unwrap();
+
+    let embed = CreateEmbed::new()
+        .title("**Stats**")
+        .field(
+            "Commands Ran",
+            commands_ran.load(Ordering::Relaxed).to_string(),
+            true,
+        )
+        .field(
+            "Songs Played",
+            songs_played.load(Ordering::Relaxed).to_string(),
+            true,
+        )
+        .footer(CreateEmbedFooter::new(format!(
+            "Bot ID: {}",
+            context.cache().current_user().id
+        )));
+
+    let msg = CreateReply::default().embed(embed);
+
+    let _ = context.send(msg).await;
 
     Ok(())
 }

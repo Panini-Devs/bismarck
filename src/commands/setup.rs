@@ -14,7 +14,7 @@ pub async fn prefix(context: Context<'_>) -> Result<(), Error> {
     if let Some(guild_id) = context.guild_id() {
         let id = guild_id.get();
 
-        let pf = context.data().guild_data.read().await;
+        let pf = &context.data().guild_data;
 
         let guild_settings = pf.get(&id);
 
@@ -31,9 +31,7 @@ pub async fn prefix(context: Context<'_>) -> Result<(), Error> {
 
                 Ok(())
             }
-            None => {
-                Err(Error::from("No guild settings found"))
-            }
+            None => Err(Error::from("No guild settings found")),
         }
     } else {
         let embed = CreateEmbed::default()
@@ -68,7 +66,7 @@ pub async fn set(context: Context<'_>, prefix: Option<String>) -> Result<(), Err
         let id = guild_id.get();
 
         let new_prefix = {
-            let mut pf = context.data().guild_data.write().await;
+            let pf = &context.data().guild_data;
             // update guild settings
             let setting = GuildSettings {
                 prefix: prefix.clone(),
@@ -82,7 +80,7 @@ pub async fn set(context: Context<'_>, prefix: Option<String>) -> Result<(), Err
                 default_mute_duration: 60000,
             };
 
-            let guild_setting = pf.entry(id).or_insert(setting);
+            let mut guild_setting = pf.entry(id).or_insert(setting);
             guild_setting.prefix = prefix.clone();
 
             prefix
@@ -126,7 +124,7 @@ pub async fn set(context: Context<'_>, prefix: Option<String>) -> Result<(), Err
 pub async fn view(context: Context<'_>) -> Result<(), Error> {
     if let Some(guild_id) = context.guild_id() {
         let id = guild_id.get();
-        let pf = context.data().guild_data.read().await;
+        let pf = &context.data().guild_data;
 
         let guild_settings = pf.get(&id);
 

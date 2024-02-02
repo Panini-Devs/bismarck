@@ -21,7 +21,7 @@ pub async fn help(
         };
     }
 
-    let pf = context.data().guild_data.read().await;
+    let pf = &context.data().guild_data.clone();
     let prefix = {
         if let Some(guild_id) = context.guild_id() {
             let guild_settings = pf.get(&guild_id.get());
@@ -31,13 +31,15 @@ pub async fn help(
                 "+"
             }
         } else {
-           "+"
+            "+"
         }
     };
 
-    let format = format!("\
+    let format = format!(
+        "\
     Type `{prefix}help command` for more info on a command.
-    You can edit your `{prefix}help` message to the bot and the bot will edit its response.");
+    You can edit your `{prefix}help` message to the bot and the bot will edit its response."
+    );
 
     let extra_text_at_bottom = format.as_str();
 
