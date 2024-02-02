@@ -1,6 +1,6 @@
 use poise::serenity_prelude as serenity;
 use serenity::{ActivityData, CreateAllowedMentions};
-use std::sync::atomic::Ordering;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
 use tracing::info;
 
@@ -55,7 +55,7 @@ pub async fn event_handler(
             if content == "<@!1183487567094632638>" || content == "<@1183487567094632638>" {
                 let prefix = {
                     let guild_data = &data.guild_data;
-                    let pf = guild_data.read().await;
+                    let pf = guild_data;
                     pf.get(&new_message.guild_id.unwrap().get())
                         .unwrap()
                         .prefix
@@ -170,8 +170,22 @@ pub async fn event_handler(
                     .await
                     .unwrap();
 
+            let fetched_bot_stats =
+                sqlx::query!("SELECT * FROM bot_stats WHERE guild_id = ?", guild_id,)
+                    .fetch_one(&database)
+                    .await
+                    .unwrap();
+
             let owner_id_u64 = owner_id as u64;
             let guild_id_u64 = guild_id as u64;
+
+            let commands_ran = fetched_bot_stats.commands_ran as u64;
+            let songs_played = fetched_bot_stats.songs_played as u64;
+
+            data.commands_ran
+                .insert(guild_id_u64, AtomicU64::new(commands_ran));
+            data.songs_played
+                .insert(guild_id_u64, AtomicU64::new(songs_played));
 
             let data_to_set = GuildSettings {
                 prefix: fetched_guild.prefix,
@@ -182,7 +196,7 @@ pub async fn event_handler(
             };
 
             {
-                let mut guild_settings = data.guild_data.write().await;
+                let guild_settings = &data.guild_data;
                 guild_settings.insert(guild_id_u64, data_to_set);
             }
 

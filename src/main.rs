@@ -1,9 +1,10 @@
+use dashmap::DashMap;
 use poise::serenity_prelude as serenity;
 use sqlx::sqlite::SqliteQueryResult;
 use std::env;
-use std::sync::atomic::AtomicBool;
-use std::{collections::HashMap, sync::Arc, time::Duration};
-use tokio::{sync::RwLock, time::sleep};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::{sync::Arc, time::Duration};
+use tokio::time::sleep;
 use tracing::{error, info};
 use utilities::event_handler::event_handler;
 use utilities::types::GuildSettings;
@@ -18,7 +19,9 @@ use sqlx::SqlitePool;
 pub struct Data {
     pub reqwest: reqwest::Client,
     pub sqlite: SqlitePool,
-    pub guild_data: RwLock<HashMap<u64, GuildSettings>>,
+    pub guild_data: DashMap<u64, GuildSettings>,
+    pub commands_ran: DashMap<u64, AtomicU64>,
+    pub songs_played: DashMap<u64, AtomicU64>,
     pub shard_manager: Arc<serenity::ShardManager>,
     pub is_loop_running: AtomicBool,
 } // User data, which is stored and accessible in all command invocations
@@ -60,7 +63,7 @@ async fn main() {
         .await
         .expect("Couldn't fetch guild settings");
 
-    let mut guild_settings_map = HashMap::new();
+    let guild_settings_map = DashMap::new();
 
     for guild_setting in guild_settings {
         let guild_id = guild_setting.guild_id as u64;
@@ -73,6 +76,25 @@ async fn main() {
         };
 
         guild_settings_map.insert(guild_id, guild_settings);
+    }
+
+    // Initialize command counter
+    let bot_stats = sqlx::query!("SELECT * FROM bot_stats")
+        .fetch_all(&database)
+        .await
+        .expect("Couldn't fetch bot stats");
+
+    let commands_ran = DashMap::new();
+    let songs_played = DashMap::new();
+
+    for bot_stat in bot_stats {
+        let guild_id = bot_stat.guild_id as u64;
+
+        let cr = bot_stat.commands_ran as u64;
+        let sp = bot_stat.songs_played as u64;
+
+        commands_ran.insert(guild_id, AtomicU64::new(cr));
+        songs_played.insert(guild_id, AtomicU64::new(sp));
     }
 
     let framework = poise::Framework::builder()
@@ -90,7 +112,7 @@ async fn main() {
                 dynamic_prefix: Some(|context: PartialContext| {
                     Box::pin(async move {
                         if let Some(guild_id) = context.guild_id {
-                            let pf = context.data.guild_data.read().await;
+                            let pf = &context.data.guild_data;
 
                             let guild_settings = pf.get(&guild_id.get());
                             match guild_settings {
@@ -162,11 +184,20 @@ async fn main() {
                 ping(),
                 servers(),
                 prefix(),
-                shutdown()
+                shutdown(),
             ],
             skip_checks_for_owners: true,
             event_handler: |context, event, framework, data| {
                 Box::pin(event_handler(context, event, framework, data))
+            },
+            pre_command: |context| {
+                Box::pin(async move {
+                    if let Some(guild_id) = context.guild_id() {
+                        let commands_ran =
+                            context.data().commands_ran.get(&guild_id.get()).unwrap();
+                        commands_ran.fetch_add(1, Ordering::Relaxed);
+                    }
+                })
             },
             ..Default::default()
         })
@@ -176,7 +207,9 @@ async fn main() {
                 Ok(Data {
                     reqwest: reqwest::Client::new(),
                     sqlite: database,
-                    guild_data: RwLock::new(guild_settings_map),
+                    commands_ran: commands_ran,
+                    songs_played: songs_played,
+                    guild_data: guild_settings_map,
                     shard_manager: framework.shard_manager().clone(),
                     is_loop_running: AtomicBool::new(false),
                 })
