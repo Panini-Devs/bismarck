@@ -182,8 +182,10 @@ pub async fn event_handler(
             let commands_ran = fetched_bot_stats.commands_ran as u64;
             let songs_played = fetched_bot_stats.songs_played as u64;
 
-            data.commands_ran.insert(guild_id_u64, AtomicU64::new(commands_ran));
-            data.songs_played.insert(guild_id_u64, AtomicU64::new(songs_played));
+            data.commands_ran
+                .insert(guild_id_u64, AtomicU64::new(commands_ran));
+            data.songs_played
+                .insert(guild_id_u64, AtomicU64::new(songs_played));
 
             let data_to_set = GuildSettings {
                 prefix: fetched_guild.prefix,

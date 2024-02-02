@@ -1,13 +1,13 @@
+use dashmap::DashMap;
 use poise::serenity_prelude as serenity;
 use sqlx::sqlite::SqliteQueryResult;
 use std::env;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::{collections::HashMap, sync::Arc, time::Duration};
-use tokio::{sync::RwLock, time::sleep};
+use std::{sync::Arc, time::Duration};
+use tokio::time::sleep;
 use tracing::{error, info};
 use utilities::event_handler::event_handler;
 use utilities::types::GuildSettings;
-use dashmap::DashMap;
 
 mod commands;
 mod utilities;
@@ -63,7 +63,7 @@ async fn main() {
         .await
         .expect("Couldn't fetch guild settings");
 
-    let mut guild_settings_map = DashMap::new();
+    let guild_settings_map = DashMap::new();
 
     for guild_setting in guild_settings {
         let guild_id = guild_setting.guild_id as u64;
