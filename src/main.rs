@@ -207,8 +207,8 @@ async fn main() {
                 Ok(Data {
                     reqwest: reqwest::Client::new(),
                     sqlite: database,
-                    commands_ran: commands_ran,
-                    songs_played: songs_played,
+                    commands_ran,
+                    songs_played,
                     guild_data: guild_settings_map,
                     shard_manager: framework.shard_manager().clone(),
                     is_loop_running: AtomicBool::new(false),
