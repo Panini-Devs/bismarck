@@ -178,6 +178,7 @@ async fn main() {
                 about(),
                 user_info(),
                 user_avatars(),
+                bot_stat(),
                 multiply(),
                 add(),
                 help(),
@@ -230,6 +231,8 @@ async fn main() {
         tokio::signal::ctrl_c()
             .await
             .expect("Could not register ctrl+c handler");
+
+        info!("Gracefully shutting down...");
         shard_manager.shutdown_all().await;
     });
 
