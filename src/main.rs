@@ -178,6 +178,7 @@ async fn main() {
                 about(),
                 user_info(),
                 user_avatars(),
+                bot_stat(),
                 multiply(),
                 add(),
                 help(),
@@ -207,8 +208,8 @@ async fn main() {
                 Ok(Data {
                     reqwest: reqwest::Client::new(),
                     sqlite: database,
-                    commands_ran: commands_ran,
-                    songs_played: songs_played,
+                    commands_ran,
+                    songs_played,
                     guild_data: guild_settings_map,
                     shard_manager: framework.shard_manager().clone(),
                     is_loop_running: AtomicBool::new(false),
@@ -230,6 +231,8 @@ async fn main() {
         tokio::signal::ctrl_c()
             .await
             .expect("Could not register ctrl+c handler");
+
+        info!("Gracefully shutting down...");
         shard_manager.shutdown_all().await;
     });
 

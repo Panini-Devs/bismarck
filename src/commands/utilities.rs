@@ -47,6 +47,7 @@ pub async fn help(
     Ok(())
 }
 
+/// Shows latency of the bot to Discord API and Shard.
 #[poise::command(prefix_command, slash_command, category = "Utility")]
 pub async fn ping(context: Context<'_>) -> Result<(), Error> {
     let start = Utc::now();
@@ -97,6 +98,7 @@ pub async fn ping(context: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
 
+/// Shows the servers the bot is connected to.
 #[poise::command(slash_command, prefix_command)]
 pub async fn servers(ctx: Context<'_>) -> Result<(), Error> {
     poise::builtins::servers(ctx).await?;

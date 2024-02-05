@@ -164,9 +164,9 @@ pub async fn user_avatars(
     Ok(())
 }
 
-// Returns the bot's stats.
+/// Returns the bot's stats.
 #[poise::command(slash_command, prefix_command, required_permissions = "SEND_MESSAGES")]
-pub async fn bot_stats(context: Context<'_>) -> Result<(), Error> {
+pub async fn bot_stat(context: Context<'_>) -> Result<(), Error> {
     let guild = context.guild().unwrap().id;
 
     let commands_ran = context.data().commands_ran.get(&guild.get()).unwrap();
