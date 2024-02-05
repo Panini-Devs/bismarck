@@ -3,7 +3,7 @@ use poise::{serenity_prelude as serenity, CreateReply};
 use serenity::{CreateEmbed, CreateEmbedFooter};
 use tracing::info;
 
-///
+/// Shows the prefix for the bot.
 #[poise::command(
     prefix_command,
     slash_command,
