@@ -19,40 +19,6 @@ CREATE TABLE IF NOT EXISTS guild_settings (
 	PRIMARY KEY(guild_id)
 );
 
-
--- user profile schema
-CREATE TABLE IF NOT EXISTS user_profile (
-    user_id BIGINT NOT NULL,
-    guild_id BIGINT NOT NULL DEFAULT 0,
-    first_joined_at TEXT NOT NULL,
-    latest_joined_at TEXT NOT NULL,
-    commands_ran INTEGER NOT NULL DEFAULT 0,
-  	PRIMARY KEY(user_id),
-  	FOREIGN KEY (guild_id) REFERENCES guild_settings(guild_id) ON DELETE CASCADE
-);
-
--- modlog schema
-CREATE TABLE IF NOT EXISTS mod_log (
-    id BIGINT NOT NULL,
-    guild_id BIGINT NOT NULL,
-    user_id BIGINT NOT NULL,
-    moderator_id BIGINT NOT NULL,
-    action_type TEXT NOT NULL,
-    action_duration INTEGER,
-    reason TEXT NOT NULL DEFAULT "No reason provided",
-    time_created TEXT NOT NULL,
-    PRIMARY KEY (id)
-    FOREIGN KEY (guild_id) REFERENCES guild_settings(guild_id) ON DELETE CASCADE
-);
-
--- bot stats schema
-CREATE TABLE IF NOT EXISTS bot_stats (
-    guild_id BIGINT NOT NULL DEFAULT 0,
-    commands_ran BIGINT NOT NULL DEFAULT 0,
-    songs_played BIGINT NOT NULL DEFAULT 0,
-  	FOREIGN KEY (guild_id) REFERENCES guild_settings(guild_id) ON DELETE CASCADE
-);
-
 -- music settings schema (TBD)
 /*
 CREATE TABLE IF NOT EXISTS music_settings (
