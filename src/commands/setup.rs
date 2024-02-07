@@ -8,6 +8,7 @@ use tracing::info;
     prefix_command,
     slash_command,
     category = "Settings",
+    required_bot_permissions = "SEND_MESSAGES",
     subcommands("set", "view")
 )]
 pub async fn prefix(context: Context<'_>) -> Result<(), Error> {
@@ -53,6 +54,7 @@ pub async fn prefix(context: Context<'_>) -> Result<(), Error> {
     slash_command,
     category = "Settings",
     required_permissions = "ADMINISTRATOR",
+    required_bot_permissions = "SEND_MESSAGES",
     guild_only = true
 )]
 pub async fn set(context: Context<'_>, prefix: Option<String>) -> Result<(), Error> {

@@ -6,7 +6,12 @@ use poise::serenity_prelude::CreateEmbed;
 use poise::CreateReply;
 
 /// Show help message
-#[poise::command(prefix_command, track_edits, category = "Utility")]
+#[poise::command(
+    prefix_command,
+    track_edits,
+    category = "Utility",
+    required_bot_permissions = "SEND_MESSAGES"
+)]
 pub async fn help(
     context: Context<'_>,
     #[description = "Command to get help for"]
@@ -48,7 +53,12 @@ pub async fn help(
 }
 
 /// Shows latency of the bot to Discord API and Shard.
-#[poise::command(prefix_command, slash_command, category = "Utility")]
+#[poise::command(
+    prefix_command,
+    slash_command,
+    category = "Utility",
+    required_bot_permissions = "SEND_MESSAGES"
+)]
 pub async fn ping(context: Context<'_>) -> Result<(), Error> {
     let start = Utc::now();
     let start_ts = start.timestamp();

@@ -5,7 +5,7 @@ use crate::{Context, Error};
     prefix_command,
     slash_command,
     category = "Math",
-    required_permissions = "SEND_MESSAGES"
+    required_bot_permissions = "SEND_MESSAGES"
 )]
 pub async fn multiply(
     context: Context<'_>,
@@ -29,7 +29,7 @@ pub async fn multiply(
     prefix_command,
     slash_command,
     category = "Math",
-    required_permissions = "SEND_MESSAGES"
+    required_bot_permissions = "SEND_MESSAGES"
 )]
 pub async fn add(
     context: Context<'_>,
@@ -53,7 +53,7 @@ pub async fn add(
     prefix_command,
     slash_command,
     category = "Math",
-    required_permissions = "SEND_MESSAGES"
+    required_bot_permissions = "SEND_MESSAGES"
 )]
 pub async fn divide(
     context: Context<'_>,
@@ -82,7 +82,7 @@ pub async fn divide(
     prefix_command,
     slash_command,
     category = "Math",
-    required_permissions = "SEND_MESSAGES"
+    required_bot_permissions = "SEND_MESSAGES"
 )]
 pub async fn subtract(
     context: Context<'_>,

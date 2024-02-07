@@ -11,7 +11,7 @@ use serenity::{CreateEmbed, CreateEmbedAuthor, CreateEmbedFooter, PremiumType};
 #[poise::command(
     prefix_command,
     slash_command,
-    required_permissions = "SEND_MESSAGES",
+    required_bot_permissions = "SEND_MESSAGES",
     aliases("botinfo", "bi"),
     category = "Info"
 )]
@@ -71,7 +71,7 @@ pub async fn about(context: Context<'_>) -> Result<(), Error> {
 #[poise::command(
     slash_command,
     prefix_command,
-    required_permissions = "SEND_MESSAGES",
+    required_bot_permissions = "SEND_MESSAGES",
     aliases("userinfo", "ui"),
     category = "Info"
 )]
@@ -118,7 +118,12 @@ pub async fn user_info(
 }
 
 /// Shows the user's avatars.
-#[poise::command(prefix_command, slash_command, required_permissions = "SEND_MESSAGES")]
+#[poise::command(
+    prefix_command,
+    slash_command,
+    category = "Info",
+    required_bot_permissions = "SEND_MESSAGES"
+)]
 pub async fn user_avatars(
     context: Context<'_>,
     #[description = "Selected user."] user: Option<serenity::User>,
@@ -165,7 +170,12 @@ pub async fn user_avatars(
 }
 
 /// Returns the bot's stats.
-#[poise::command(slash_command, prefix_command, required_permissions = "SEND_MESSAGES")]
+#[poise::command(
+    slash_command,
+    prefix_command,
+    category = "Info",
+    required_bot_permissions = "SEND_MESSAGES"
+)]
 pub async fn bot_stat(context: Context<'_>) -> Result<(), Error> {
     let guild = context.guild().unwrap().id;
 
