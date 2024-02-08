@@ -1,0 +1,137 @@
+use chrono::NaiveDateTime;
+use poise::serenity_prelude as serenity;
+use serenity::all::{GuildId, UserId};
+use sqlx::{Row, SqlitePool};
+use tokio::time::Instant;
+use tracing::{error, info};
+use uuid::Uuid;
+
+pub enum ModType {
+    Warn,
+    Timeout,
+    Kick,
+    Ban,
+    Deafen,
+    Mute,
+}
+
+impl ModType {
+    pub fn as_str(&self) -> &str {
+        match self {
+            ModType::Warn => "warn",
+            ModType::Timeout => "timeout",
+            ModType::Kick => "kick",
+            ModType::Ban => "ban",
+            ModType::Deafen => "deafen",
+            ModType::Mute => "mute",
+        }
+    }
+}
+
+pub async fn select_mod_log(
+    modtype: ModType,
+    user_id: &UserId,
+    guild_id: &GuildId,
+    pool: &SqlitePool,
+) -> Result<Vec<(String, i64, i64, i64, String, String, String)>, sqlx::Error> {
+    let start_time = Instant::now();
+
+    let rows = sqlx::query(
+        "SELECT uuid, action_type, user_id, moderator_id, reason, time_created, guild_id FROM mod_log WHERE user_id = ? AND guild_id = ? AND action_type = ?"
+    )
+        .bind(i64::from(*user_id))
+        .bind(i64::from(*guild_id))
+        .bind(modtype.as_str())
+        .fetch_all(pool).await?;
+
+    let mut logs = Vec::new();
+
+    for row in rows {
+        if row.is_empty() {
+            return Err(sqlx::Error::RowNotFound);
+        }
+
+        let (uuid, guild_id, user_id, moderator_id, action_type, created_at, reason) = (
+            row.get::<String, _>(0),
+            row.get::<i64, _>(1),
+            row.get::<i64, _>(2),
+            row.get::<i64, _>(3),
+            row.get::<String, _>(4),
+            row.get::<NaiveDateTime, _>(5),
+            row.get::<String, _>(6),
+        );
+
+        logs.push((
+            uuid,
+            guild_id,
+            user_id,
+            moderator_id,
+            action_type,
+            created_at.to_string(),
+            reason,
+        ));
+    }
+
+    let elapsed_time = start_time.elapsed();
+    info!("Selected from Moderation Logs in {elapsed_time:.2?}");
+
+    Ok(logs)
+}
+
+pub async fn delete_mod_log(
+    uuid: String,
+    guild_id: &GuildId,
+    pool: &SqlitePool,
+) -> Result<(), sqlx::Error> {
+    let start_time = Instant::now();
+
+    let query = sqlx::query("DELETE FROM mod_log WHERE uuid = ? AND guild_id = ?")
+        .bind(uuid)
+        .bind(i64::from(*guild_id));
+
+    if let Err(why) = query.execute(pool).await {
+        error!("Failed to execute query: {:?}", why);
+        return Err(why);
+    }
+
+    let elapsed_time = start_time.elapsed();
+    info!("Deleted from Moderation Logs in {elapsed_time:.2?}");
+
+    Ok(())
+}
+
+pub async fn insert_mod_log(
+    action_type: ModType,
+    guild_id: &GuildId,
+    user_id: &UserId,
+    moderator_id: &UserId,
+    reason: &str,
+    created_at: NaiveDateTime,
+    pool: &SqlitePool,
+) -> Result<(), sqlx::Error> {
+    let start_time = Instant::now();
+
+    let uuid = Uuid::new_v4().to_string();
+
+    let query = sqlx::query(
+        "INSERT INTO mod_log (uuid, action_type, user_id, moderator_id, reason, time_created, guild_id) VALUES (?, ?, ?, ?, ?, ?, ?)"
+    )
+        .bind(uuid)
+        .bind(action_type.as_str())
+        .bind(i64::from(*user_id))
+        .bind(i64::from(*moderator_id))
+        .bind(reason)
+        .bind(created_at)
+        .bind(i64::from(*guild_id));
+
+    if let Err(why) = query.execute(pool).await {
+        error!("Failed to execute query: {:?}", why);
+        return Err(why);
+    }
+
+    let elapsed_time = start_time.elapsed();
+
+    info!("Inserted into Moderation Logs in {elapsed_time:.2?}");
+
+    Ok(())
+}

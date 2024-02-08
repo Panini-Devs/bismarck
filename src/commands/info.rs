@@ -185,12 +185,12 @@ pub async fn bot_stat(context: Context<'_>) -> Result<(), Error> {
     let embed = CreateEmbed::new()
         .title("**Stats**")
         .field(
-            "Commands Ran",
+            "Commands Ran (Guild)",
             commands_ran.load(Ordering::Relaxed).to_string(),
             true,
         )
         .field(
-            "Songs Played",
+            "Songs Played (Guild)",
             songs_played.load(Ordering::Relaxed).to_string(),
             true,
         )

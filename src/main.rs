@@ -198,6 +198,9 @@ async fn main() {
                             context.data().commands_ran.get(&guild_id.get()).unwrap();
                         commands_ran.fetch_add(1, Ordering::Relaxed);
                     }
+
+                    let commands_ran_global = context.data().commands_ran.get(&0).unwrap();
+                    commands_ran_global.fetch_add(1, Ordering::Relaxed);
                 })
             },
             ..Default::default()
