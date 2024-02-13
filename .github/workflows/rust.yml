@@ -13,6 +13,8 @@ jobs:
   build:
 
     runs-on: ${{ matrix.os }}
+    env:
+      DATABASE_URL: "sqlite:database.sqlite"
 
     strategy:
       matrix:
