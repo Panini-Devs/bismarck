@@ -1,7 +1,11 @@
 use chrono::NaiveDateTime;
 use serenity::{
-    all::User,
+    all::{
+        colours::css,
+        User,
+    },
     builder::{CreateEmbed, CreateEmbedAuthor},
+    model::Colour,
 };
 use std::fmt::Write;
 
@@ -60,4 +64,16 @@ pub fn warnings_command_embed(
     CreateEmbed::default()
         .author(embed_author)
         .fields(embed_fields)
+}
+
+pub fn error_message_embed(message: &String) -> CreateEmbed {
+    CreateEmbed::default()
+        .description(format!("{message}"))
+        .colour(css::DANGER)
+}
+
+pub fn info_message_embed(message: &String) -> CreateEmbed {
+    CreateEmbed::default()
+        .description(format!("{message}"))
+        .colour(Colour::BLUE)
 }
