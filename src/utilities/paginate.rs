@@ -1,13 +1,15 @@
 use poise::serenity_prelude as serenity;
+use uuid::Uuid;
 
 use crate::Context;
 
+/// Paginates a list of embeds using UUID as custom ID to identify the buttons.
 pub async fn paginate<U, E>(
     ctx: Context<'_>,
     pages: Vec<serenity::all::CreateEmbed>,
 ) -> Result<(), serenity::Error> {
     // Define some unique identifiers for the navigation buttons
-    let ctx_id = ctx.id();
+    let ctx_id = Uuid::new_v4();
     let prev_button_id = format!("{}prev", ctx_id);
     let next_button_id = format!("{}next", ctx_id);
 

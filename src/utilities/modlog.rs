@@ -3,7 +3,7 @@ use poise::serenity_prelude as serenity;
 use serenity::all::{GuildId, UserId};
 use sqlx::{Row, SqlitePool};
 use tokio::time::Instant;
-use tracing::{error, info};
+use tracing::{debug, error, info};
 use uuid::Uuid;
 
 pub enum ModType {
@@ -100,7 +100,7 @@ pub async fn delete_mod_log(
     Ok(())
 }
 
-pub async fn insert_mod_log(
+pub async fn insert_modlog(
     action_type: ModType,
     guild_id: &GuildId,
     user_id: &UserId,
@@ -132,6 +132,57 @@ pub async fn insert_mod_log(
     let elapsed_time = start_time.elapsed();
 
     info!("Inserted into Moderation Logs in {elapsed_time:.2?}");
+
+    Ok(())
+}
+
+pub async fn select_modlog_from_users(
+    user_id: &UserId,
+    pool: &SqlitePool,
+) -> Result<i32, sqlx::Error> {
+    let start_time = Instant::now();
+
+    let query =
+        sqlx::query("SELECT infractions FROM users WHERE user_id = ?").bind(i64::from(*user_id));
+    let row = match query.fetch_one(pool).await {
+        Ok(infractions) => infractions,
+        Err(why) => {
+            error!("Couldn't select infractions from Users: {why:?}");
+            return Err(why);
+        }
+    };
+
+    let infractions = match row.try_get::<i32, _>("infractions") {
+        Ok(infractions) => infractions,
+        Err(why) => {
+            error!("Couldn't get infractions: {why:?}");
+            return Err(why);
+        }
+    };
+
+    let elapsed_time = start_time.elapsed();
+    debug!("Selected infractions from Users in {elapsed_time:.2?}");
+
+    Ok(infractions)
+}
+
+pub async fn update_users_set_modlog(
+    user_id: &UserId,
+    infractions: i32,
+    pool: &SqlitePool,
+) -> Result<(), sqlx::Error> {
+    let start_time = Instant::now();
+
+    let query = sqlx::query("UPDATE users SET infractions = ? WHERE user_id = ?")
+        .bind(infractions)
+        .bind(i64::from(*user_id));
+    if let Err(why) = query.execute(pool).await {
+        error!("Couldn't update infractions for user(s) in Users: {why:?}");
+        return Err(why);
+    }
+
+    let elapsed_time = start_time.elapsed();
+    debug!("Updated infractions for user(s) within Users in {elapsed_time:.2?}");
 
     Ok(())
 }

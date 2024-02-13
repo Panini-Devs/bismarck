@@ -57,7 +57,12 @@ pub async fn prefix(context: Context<'_>) -> Result<(), Error> {
     required_bot_permissions = "SEND_MESSAGES",
     guild_only = true
 )]
-pub async fn set(context: Context<'_>, prefix: Option<String>) -> Result<(), Error> {
+pub async fn set(
+    context: Context<'_>,
+    #[description = "The new prefix."]
+    #[max_length = 5]
+    prefix: Option<String>,
+) -> Result<(), Error> {
     if let Some(guild_id) = context.guild_id() {
         let prefix = prefix.unwrap_or_else(|| "+".to_string());
 
