@@ -216,6 +216,13 @@ pub async fn event_handler(
                     .execute(&database)
                     .await
                     .unwrap();
+
+                info!("Guild settings removed for guild {}", guild.name);
+
+                let guild_id = u64::from(guild.id);
+
+                data.guild_data.remove(&guild_id);
+                data.commands_ran.remove(&guild_id);
             }
         }
         _ => {}
