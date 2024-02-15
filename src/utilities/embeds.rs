@@ -1,9 +1,6 @@
 use chrono::NaiveDateTime;
 use serenity::{
-    all::{
-        colours::css,
-        User,
-    },
+    all::{colours::css, User},
     builder::{CreateEmbed, CreateEmbedAuthor},
     model::Colour,
 };
@@ -53,13 +50,14 @@ pub fn warnings_command_embed(
         writeln!(date_field, "{date}").unwrap();
     }
 
-    let mut embed_fields = Vec::new();
-    embed_fields.push(("ID", id_field.clone(), true));
-    embed_fields.push(("Moderator", moderator_field, true));
-    embed_fields.push(("Reason", reason_field, true));
-    embed_fields.push(("\u{200B}", "\u{200B}".to_owned(), false));
-    embed_fields.push(("ID", id_field, true));
-    embed_fields.push(("Date", date_field, true));
+    let embed_fields = vec![
+        ("ID", id_field.clone(), true),
+        ("Moderator", moderator_field, true),
+        ("Reason", reason_field, true),
+        ("\u{200B}", "\u{200B}".to_owned(), false),
+        ("ID", id_field, true),
+        ("Date", date_field, true)
+    ];
 
     CreateEmbed::default()
         .author(embed_author)
@@ -68,12 +66,12 @@ pub fn warnings_command_embed(
 
 pub fn error_message_embed(message: &String) -> CreateEmbed {
     CreateEmbed::default()
-        .description(format!("{message}"))
+        .description(message.to_string())
         .colour(css::DANGER)
 }
 
 pub fn info_message_embed(message: &String) -> CreateEmbed {
     CreateEmbed::default()
-        .description(format!("{message}"))
+        .description(message.to_string())
         .colour(Colour::BLUE)
 }

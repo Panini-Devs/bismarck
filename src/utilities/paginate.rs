@@ -4,7 +4,7 @@ use uuid::Uuid;
 use crate::Context;
 
 /// Paginates a list of embeds using UUID as custom ID to identify the buttons.
-pub async fn paginate<U, E>(
+pub async fn paginate(
     ctx: Context<'_>,
     pages: Vec<serenity::all::CreateEmbed>,
 ) -> Result<(), serenity::Error> {

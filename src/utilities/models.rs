@@ -1,6 +1,6 @@
 use crate::Context;
 use poise::serenity_prelude::{model::ModelError, User, UserId};
-use serenity::all::{Mention, Mentionable};
+use serenity::all::{GuildId, Member, Mention, Mentionable};
 use tracing::error;
 
 pub fn author(context: Context<'_>) -> Result<&User, ModelError> {
@@ -17,11 +17,25 @@ pub async fn user(context: Context<'_>, user_id: UserId) -> Result<User, ModelEr
         Ok(user) => Ok(user),
         Err(why) => {
             error!("Couldn't get user: {why:?}");
-            return Err(ModelError::MemberNotFound);
+            Err(ModelError::MemberNotFound)
         }
     }
 }
 
 pub async fn user_mention(context: Context<'_>, user_id: UserId) -> Result<Mention, ModelError> {
     Ok(user(context, user_id).await?.mention())
+}
+
+pub async fn member(
+    ctx: Context<'_>,
+    guild_id: GuildId,
+    user_id: UserId,
+) -> Result<Member, ModelError> {
+    match guild_id.member(&ctx, user_id).await {
+        Ok(member) => Ok(member),
+        Err(why) => {
+            error!("Couldn't get member: {why:?}");
+            Err(ModelError::MemberNotFound)
+        }
+    }
 }

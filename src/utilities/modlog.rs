@@ -9,10 +9,10 @@ use uuid::Uuid;
 pub enum ModType {
     Warn,
     Timeout,
+    Untimeout,
     Kick,
     Ban,
-    Deafen,
-    Mute,
+    Unban,
 }
 
 impl ModType {
@@ -20,10 +20,10 @@ impl ModType {
         match self {
             ModType::Warn => "warn",
             ModType::Timeout => "timeout",
+            ModType::Untimeout => "untimeout",
             ModType::Kick => "kick",
             ModType::Ban => "ban",
-            ModType::Deafen => "deafen",
-            ModType::Mute => "mute",
+            ModType::Unban => "unban",
         }
     }
 }

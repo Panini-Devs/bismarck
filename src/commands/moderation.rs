@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use crate::{
     utilities::{
         messages, models,
@@ -6,8 +8,10 @@ use crate::{
     Context, Error,
 };
 
-use chrono::Utc;
+use chrono::{Days, Utc};
+use duration_str::parse;
 use poise::serenity_prelude::UserId;
+use serenity::model::Timestamp;
 use tracing::{error, info};
 
 #[poise::command(
@@ -106,6 +110,492 @@ pub async fn ban(
             Err(why) => {
                 error!("Couldn't ban @{user_name}: {why:?}");
                 Err(format!("Sorry, but I couldn't ban {user_mention}."))
+            }
+        }
+    };
+
+    if let Err(why) = result {
+        let reply = messages::error_reply(&why, true);
+        context.send(reply).await?;
+    }
+
+    Ok(())
+}
+
+#[poise::command(
+    prefix_command,
+    slash_command,
+    category = "Moderator",
+    required_permissions = "KICK_MEMBERS",
+    required_bot_permissions = "KICK_MEMBERS | SEND_MESSAGES",
+    guild_only,
+    ephemeral
+)]
+pub async fn kick(
+    context: Context<'_>,
+    #[description = "The user to kick."]
+    #[rename = "user"]
+    user_id: UserId,
+    #[description = "Reason for the kick."]
+    #[max_length = 80]
+    reason: Option<String>,
+) -> Result<(), Error> {
+    let database = &context.data().sqlite;
+
+    let user = models::user(context, user_id).await?;
+
+    let moderator = context.author();
+    let moderator_id = moderator.id;
+
+    if user.system {
+        let reply = messages::error_reply("Cannot kick a system user.", false);
+        context.send(reply).await?;
+        return Ok(());
+    }
+
+    if user_id == moderator_id {
+        let reply = messages::error_reply("Sorry, but you cannot kick yourself.", true);
+        context.send(reply).await?;
+
+        return Ok(());
+    }
+
+    let reason = reason.unwrap_or_else(|| "No reason provided.".to_string());
+
+    let reason_char_count = reason.chars().count();
+    if reason_char_count > 80 {
+        let reply = messages::info_reply("Reason must be no more than 80 characters long.", true);
+        context.send(reply).await?;
+
+        return Ok(());
+    }
+
+    let result = {
+        let (user_name, user_mention) = (&user.name, models::user_mention(context, user_id).await?);
+
+        let (moderator_name, moderator_mention) =
+            (&moderator.name, models::author_mention(context)?);
+
+        let (guild_id, guild_name) = {
+            let guild_id = context.guild_id().unwrap();
+            let guild = context.guild().unwrap();
+            (guild_id, guild.name.clone())
+        };
+
+        let created_at = Utc::now().naive_utc();
+
+        let mut user_mod_history = modlog::select_modlog_from_users(&user_id, database).await?;
+
+        let message = messages::info_message(format!(
+            "You've been kicked from {guild_name} by {moderator_mention} for {reason}.",
+        ));
+        let dm = user.direct_message(context, message).await;
+
+        if let Err(why) = dm {
+            error!("Couldn't send DM to @{user_name}: {why:?}");
+        }
+
+        match guild_id.kick_with_reason(context, user_id, &reason).await {
+            Ok(_) => {
+                modlog::insert_modlog(
+                    ModType::Kick,
+                    &guild_id,
+                    &user_id,
+                    &moderator_id,
+                    &reason,
+                    created_at,
+                    database,
+                )
+                .await?;
+
+                user_mod_history += 1;
+
+                modlog::update_users_set_modlog(&user_id, user_mod_history, database).await?;
+
+                info!("@{moderator_name} kicked @{user_name} from {guild_name}: {reason}");
+                Ok(format!("{user_mention} has been kicked."))
+            }
+            Err(why) => {
+                error!("Couldn't kick @{user_name}: {why:?}");
+                Err(format!("Sorry, but I couldn't kick {user_mention}."))
+            }
+        }
+    };
+
+    if let Err(why) = result {
+        let reply = messages::error_reply(&why, true);
+        context.send(reply).await?;
+    }
+
+    Ok(())
+}
+
+#[poise::command(
+    prefix_command,
+    slash_command,
+    category = "Moderator",
+    required_permissions = "BAN_MEMBERS",
+    required_bot_permissions = "BAN_MEMBERS | SEND_MESSAGES",
+    guild_only,
+    ephemeral
+)]
+pub async fn unban(
+    context: Context<'_>,
+    #[description = "The user to unban."]
+    #[rename = "user"]
+    user_id: UserId,
+    #[description = "Reason for the unban."]
+    #[max_length = 80]
+    reason: Option<String>,
+) -> Result<(), Error> {
+    let database = &context.data().sqlite;
+
+    let user = models::user(context, user_id).await?;
+
+    let moderator = context.author();
+    let moderator_id = moderator.id;
+
+    if user.system {
+        let reply = messages::error_reply("Cannot unban a system user.", false);
+        context.send(reply).await?;
+        return Ok(());
+    }
+
+    if user_id == moderator_id {
+        let reply = messages::error_reply("Sorry, but you cannot unban yourself.", true);
+        context.send(reply).await?;
+
+        return Ok(());
+    }
+
+    let reason = reason.unwrap_or_else(|| "No reason provided.".to_string());
+
+    let reason_char_count = reason.chars().count();
+    if reason_char_count > 80 {
+        let reply = messages::info_reply("Reason must be no more than 80 characters long.", true);
+        context.send(reply).await?;
+
+        return Ok(());
+    }
+
+    let result = {
+        let (user_name, user_mention) = (&user.name, models::user_mention(context, user_id).await?);
+
+        let moderator_name = &moderator.name;
+
+        let (guild_id, guild_name) = {
+            let guild_id = context.guild_id().unwrap();
+            let guild = context.guild().unwrap();
+            (guild_id, guild.name.clone())
+        };
+
+        let created_at = Utc::now().naive_utc();
+
+        let mut user_mod_history = modlog::select_modlog_from_users(&user_id, database).await?;
+
+        match guild_id.unban(context, user_id).await {
+            Ok(_) => {
+                modlog::insert_modlog(
+                    ModType::Unban,
+                    &guild_id,
+                    &user_id,
+                    &moderator_id,
+                    &reason,
+                    created_at,
+                    database,
+                )
+                .await?;
+
+                user_mod_history += 1;
+
+                modlog::update_users_set_modlog(&user_id, user_mod_history, database).await?;
+
+                info!("@{moderator_name} unbanned @{user_name} from {guild_name}: {reason}");
+                Ok(format!("{user_mention} has been unbanned."))
+            }
+            Err(why) => {
+                error!("Couldn't unban @{user_name}: {why:?}");
+                Err(format!("Sorry, but I couldn't unban {user_mention}."))
+            }
+        }
+    };
+
+    if let Err(why) = result {
+        let reply = messages::error_reply(&why, true);
+        context.send(reply).await?;
+    }
+
+    Ok(())
+}
+
+#[poise::command(
+    prefix_command,
+    slash_command,
+    category = "Moderator",
+    required_permissions = "MODERATE_MEMBERS",
+    required_bot_permissions = "MODERATE_MEMBERS | SEND_MESSAGES",
+    guild_only,
+    ephemeral
+)]
+pub async fn timeout(
+    context: Context<'_>,
+    #[description = "The user to timeout."]
+    #[rename = "user"]
+    user_id: UserId,
+    #[description = "Duration of the timeout."] duration: String,
+    #[description = "Reason for the timeout."]
+    #[max_length = 80]
+    reason: Option<String>,
+) -> Result<(), Error> {
+    let database = &context.data().sqlite;
+
+    let user = models::user(context, user_id).await?;
+
+    let moderator = context.author();
+    let moderator_id = moderator.id;
+
+    if user.system {
+        let reply = messages::error_reply("Cannot timeout a system user.", false);
+        context.send(reply).await?;
+        return Ok(());
+    }
+
+    if user_id == moderator_id {
+        let reply = messages::error_reply("Sorry, but you cannot timeout yourself.", true);
+        context.send(reply).await?;
+
+        return Ok(());
+    }
+
+    let reason = reason.unwrap_or_else(|| "No reason provided.".to_string());
+
+    let reason_char_count = reason.chars().count();
+    if reason_char_count > 80 {
+        let reply = messages::info_reply("Reason must be no more than 80 characters long.", true);
+        context.send(reply).await?;
+
+        return Ok(());
+    }
+
+    let duration = match parse(&duration) {
+        Ok(duration) => duration,
+        Err(why) => {
+            let reply = messages::error_reply(why.to_string(), true);
+            context.send(reply).await?;
+            return Ok(());
+        }
+    };
+
+    let time = Timestamp::from(Utc::now() + duration);
+
+    if time > Timestamp::from(Utc::now() + Days::new(28)) {
+        let reply = messages::error_reply("Cannot timeout for longer than 28 days.", true);
+        context.send(reply).await?;
+        return Ok(());
+    }
+
+    if time < Timestamp::from(Utc::now() + Duration::from_secs(0)) {
+        let reply = messages::error_reply("Cannot timeout for less than 0 seconds.", true);
+        context.send(reply).await?;
+        return Ok(());
+    }
+
+    let result = {
+        let (user_name, user_mention) = (&user.name, models::user_mention(context, user_id).await?);
+
+        let mut member = models::member(context, context.guild_id().unwrap(), user_id).await?;
+
+        let moderator_name = &moderator.name;
+
+        let (guild_id, guild_name) = {
+            let guild_id = context.guild_id().unwrap();
+            let guild = context.guild().unwrap();
+            (guild_id, guild.name.clone())
+        };
+
+        let created_at = Utc::now().naive_utc();
+
+        let mut user_mod_history = modlog::select_modlog_from_users(&user_id, database).await?;
+
+        match member
+            .disable_communication_until_datetime(context, time)
+            .await
+        {
+            Ok(_) => {
+                modlog::insert_modlog(
+                    ModType::Timeout,
+                    &guild_id,
+                    &user_id,
+                    &moderator_id,
+                    &reason,
+                    created_at,
+                    database,
+                )
+                .await?;
+
+                user_mod_history += 1;
+
+                modlog::update_users_set_modlog(&user_id, user_mod_history, database).await?;
+
+                info!("@{moderator_name} timed out @{user_name} from {guild_name}: {reason}");
+                Ok(format!("{user_mention} has been timed out."))
+            }
+            Err(why) => {
+                error!("Couldn't timeout @{user_name}: {why:?}");
+                Err(format!("Sorry, but I couldn't timeout {user_mention}."))
+            }
+        }
+    };
+
+    if let Err(why) = result {
+        let reply = messages::error_reply(&why, true);
+        context.send(reply).await?;
+    }
+
+    Ok(())
+}
+
+#[poise::command(
+    prefix_command,
+    slash_command,
+    category = "Moderator",
+    required_permissions = "MODERATE_MEMBERS",
+    required_bot_permissions = "MODERATE_MEMBERS | SEND_MESSAGES",
+    guild_only,
+    ephemeral
+)]
+pub async fn untimeout(
+    context: Context<'_>,
+    #[description = "The user to untimeout."]
+    #[rename = "user"]
+    user_id: UserId,
+) -> Result<(), Error> {
+    let database = &context.data().sqlite;
+
+    let user = models::user(context, user_id).await?;
+
+    if user.system {
+        let reply = messages::error_reply("Cannot untimeout a system user.", false);
+        context.send(reply).await?;
+        return Ok(());
+    }
+
+    let result = {
+        let (user_name, user_mention) = (&user.name, models::user_mention(context, user_id).await?);
+
+        let mut member = models::member(context, context.guild_id().unwrap(), user_id).await?;
+
+        let moderator_id = context.author().id;
+
+        let (guild_id, guild_name) = {
+            let guild_id = context.guild_id().unwrap();
+            let guild = context.guild().unwrap();
+            (guild_id, guild.name.clone())
+        };
+
+        let created_at = Utc::now().naive_utc();
+
+        let mut user_mod_history = modlog::select_modlog_from_users(&user_id, database).await?;
+
+        match member.enable_communication(context).await {
+            Ok(_) => {
+                modlog::insert_modlog(
+                    ModType::Untimeout,
+                    &guild_id,
+                    &user_id,
+                    &moderator_id,
+                    "",
+                    created_at,
+                    database,
+                )
+                .await?;
+
+                user_mod_history += 1;
+
+                modlog::update_users_set_modlog(&user_id, user_mod_history, database).await?;
+
+                info!("@{moderator_id} untimed out @{user_name} from {guild_name}");
+                Ok(format!("{user_mention} has been untimed out."))
+            }
+            Err(why) => {
+                error!("Couldn't untimeout @{user_name}: {why:?}");
+                Err(format!("Sorry, but I couldn't untimeout {user_mention}."))
+            }
+        }
+    };
+
+    if let Err(why) = result {
+        let reply = messages::error_reply(&why, true);
+        context.send(reply).await?;
+    }
+
+    Ok(())
+}
+
+#[poise::command(
+    prefix_command,
+    slash_command,
+    category = "Moderator",
+    required_permissions = "MODERATE_MEMBERS",
+    required_bot_permissions = "MODERATE_MEMBERS | SEND_MESSAGES",
+    guild_only,
+    ephemeral
+)]
+pub async fn warn(
+    context: Context<'_>,
+    #[description = "The user to warn."]
+    #[rename = "user"]
+    user_id: UserId,
+    #[description = "The reason for the warning."] reason: String,
+) -> Result<(), Error> {
+    let database = &context.data().sqlite;
+
+    let user = models::user(context, user_id).await?;
+
+    if user.system {
+        let reply = messages::error_reply("Cannot warn a system user.", false);
+        context.send(reply).await?;
+        return Ok(());
+    }
+
+    let result = {
+        let (user_name, user_mention) = (&user.name, models::user_mention(context, user_id).await?);
+
+        let moderator_id = context.author().id;
+
+        let (guild_id, guild_name) = {
+            let guild_id = context.guild_id().unwrap();
+            let guild = context.guild().unwrap();
+            (guild_id, guild.name.clone())
+        };
+
+        let created_at = Utc::now().naive_utc();
+
+        let mut user_mod_history = modlog::select_modlog_from_users(&user_id, database).await?;
+
+        match modlog::insert_modlog(
+            ModType::Warn,
+            &guild_id,
+            &user_id,
+            &moderator_id,
+            &reason,
+            created_at,
+            database,
+        )
+        .await
+        {
+            Ok(_) => {
+                user_mod_history += 1;
+
+                modlog::update_users_set_modlog(&user_id, user_mod_history, database).await?;
+
+                info!("@{moderator_id} warned @{user_name} from {guild_name}");
+                Ok(format!("{user_mention} has been warned."))
+            }
+
+            Err(why) => {
+                error!("Couldn't warn @{user_name}: {why:?}");
+                Err(format!("Sorry, but I couldn't warn {user_mention}."))
             }
         }
     };
