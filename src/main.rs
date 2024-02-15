@@ -12,7 +12,7 @@ use utilities::types::GuildSettings;
 mod commands;
 mod utilities;
 
-use crate::commands::{info::*, math::*, owner::*, setup::*, utilities::*, moderation::*};
+use crate::commands::{info::*, math::*, moderation::*, owner::*, setup::*, utilities::*};
 
 use sqlx::SqlitePool;
 
@@ -175,19 +175,29 @@ async fn main() {
                 ..Default::default()
             },
             commands: vec![
+                // Info commands
                 about(),
                 user_info(),
                 user_avatars(),
                 bot_stat(),
+                // Math commands
                 multiply(),
                 add(),
                 divide(),
                 subtract(),
+                // Moderation commands
                 ban(),
+                kick(),
+                unban(),
+                timeout(),
+                untimeout(),
+                warn(),
+                // Utility commands
                 help(),
                 ping(),
                 servers(),
                 prefix(),
+                // Owner commands
                 shutdown(),
             ],
             skip_checks_for_owners: true,
