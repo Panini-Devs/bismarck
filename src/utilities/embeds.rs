@@ -9,10 +9,10 @@ use std::fmt::Write;
 // Modified from wakalaka-rs
 pub fn warnings_command_embed(
     user: &User,
-    uuids: Vec<&String>,
-    moderator_ids: Vec<&i64>,
-    reasons: Vec<&String>,
-    dates: Vec<NaiveDateTime>,
+    uuids: &[&String],
+    moderator_ids: &[&i64],
+    reasons: &[&String],
+    dates: &[&NaiveDateTime],
 ) -> CreateEmbed {
     //  |(PFP) {user_name}                |
     //  | ID      | Moderator | Reason    |

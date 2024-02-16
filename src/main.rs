@@ -194,6 +194,7 @@ async fn main() {
                 timeout(),
                 untimeout(),
                 warn(),
+                warnings(),
                 // Utility commands
                 help(),
                 ping(),

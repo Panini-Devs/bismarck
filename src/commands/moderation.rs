@@ -2,8 +2,7 @@ use std::time::Duration;
 
 use crate::{
     utilities::{
-        messages, models,
-        modlog::{self, ModType},
+        self, embeds::warnings_command_embed, messages, models, modlog::{self, ModType}
     },
     Context, Error,
 };
@@ -635,11 +634,7 @@ pub async fn warnings(
     let result = {
         let (user_name, user_mention) = (&user.name, models::user_mention(context, user_id).await?);
 
-        let (guild_id, guild_name) = {
-            let guild_id = context.guild_id().unwrap();
-            let guild = context.guild().unwrap();
-            (guild_id, guild.name.clone())
-        };
+        let guild_id = context.guild_id().unwrap();
 
         let user_mod_history =
             match modlog::select_modlog(ModType::Warn, &user_id, &guild_id, database).await {
@@ -685,6 +680,24 @@ pub async fn warnings(
         let created_ats_iter = created_ats.chunks(25);
 
         // Cycle through the chunks of 25, creating pagination embeds
+        let mut embeds = Vec::new();
+        uuids_iter.zip(mod_ids_iter.zip(reasons_iter.zip(created_ats_iter))).for_each(
+            |(uuids, (moderator_ids, (reasons, created_ats)))| {
+                embeds.push(warnings_command_embed(&user, uuids, moderator_ids, reasons, created_ats));
+            }
+        );
+
+        match utilities::paginate::paginate(context, embeds).await {
+            Ok(_) => {
+                let author = context.author().id;
+                info!("@{author} requested @{user_name}'s warnings");
+                Ok(format!("{user_mention} has {warning_count} warning(s)."))
+            }
+            Err(why) => {
+                error!("Failed to paginate: {why:?}");
+                Err(why.to_string())
+            },
+        }
     };
 
     if let Err(why) = result {
