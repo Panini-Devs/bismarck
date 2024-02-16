@@ -56,7 +56,7 @@ pub fn warnings_command_embed(
         ("Reason", reason_field, true),
         ("\u{200B}", "\u{200B}".to_owned(), false),
         ("ID", id_field, true),
-        ("Date", date_field, true)
+        ("Date", date_field, true),
     ];
 
     CreateEmbed::default()
