@@ -28,12 +28,12 @@ impl ModType {
     }
 }
 
-pub async fn select_mod_log(
+pub async fn select_modlog(
     modtype: ModType,
     user_id: &UserId,
     guild_id: &GuildId,
     pool: &SqlitePool,
-) -> Result<Vec<(String, i64, i64, i64, String, String, String)>, sqlx::Error> {
+) -> Result<Vec<(String, i64, i64, i64, String, NaiveDateTime, String)>, sqlx::Error> {
     let start_time = Instant::now();
 
     let rows = sqlx::query(
@@ -67,7 +67,7 @@ pub async fn select_mod_log(
             user_id,
             moderator_id,
             action_type,
-            created_at.to_string(),
+            created_at,
             reason,
         ));
     }

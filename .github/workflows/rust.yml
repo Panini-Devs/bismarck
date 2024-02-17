@@ -26,6 +26,9 @@ jobs:
     - uses: hecrj/setup-rust-action@v2
       with:
         rust-version: ${{ matrix.rust }}
+    - name: Update APT Cache
+      if: matrix.os == 'ubuntu-latest'
+      run: sudo apt-get update
     - name: Install 'libatk1.0-dev' on Ubuntu
       if: matrix.os == 'ubuntu-latest'
       run: sudo apt-get install -y libatk1.0-dev

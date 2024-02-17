@@ -2,13 +2,12 @@ use std::time::Duration;
 
 use crate::{
     utilities::{
-        messages, models,
-        modlog::{self, ModType},
+        self, embeds::warnings_command_embed, messages, models, modlog::{self, ModType}
     },
     Context, Error,
 };
 
-use chrono::{Days, Utc};
+use chrono::{Days, NaiveDateTime, Utc};
 use duration_str::parse;
 use poise::serenity_prelude::UserId;
 use serenity::model::Timestamp;
@@ -597,6 +596,107 @@ pub async fn warn(
                 error!("Couldn't warn @{user_name}: {why:?}");
                 Err(format!("Sorry, but I couldn't warn {user_mention}."))
             }
+        }
+    };
+
+    if let Err(why) = result {
+        let reply = messages::error_reply(&why, true);
+        context.send(reply).await?;
+    }
+
+    Ok(())
+}
+
+#[poise::command(
+    prefix_command,
+    slash_command,
+    category = "Moderator",
+    required_permissions = "MODERATE_MEMBERS",
+    required_bot_permissions = "MODERATE_MEMBERS | SEND_MESSAGES",
+    guild_only
+)]
+pub async fn warnings(
+    context: Context<'_>,
+    #[description = "The user to get warnings for."]
+    #[rename = "user"]
+    user_id: UserId,
+) -> Result<(), Error> {
+    let database = &context.data().sqlite;
+
+    let user = models::user(context, user_id).await?;
+
+    if user.system {
+        let reply = messages::error_reply("Cannot get warnings for a system user.", false);
+        context.send(reply).await?;
+        return Ok(());
+    }
+
+    let result = {
+        let (user_name, user_mention) = (&user.name, models::user_mention(context, user_id).await?);
+
+        let guild_id = context.guild_id().unwrap();
+
+        let user_mod_history =
+            match modlog::select_modlog(ModType::Warn, &user_id, &guild_id, database).await {
+                Ok(user_mod_history) => user_mod_history,
+                Err(why) => {
+                    error!("Couldn't select warnings from infractions: {why:?}");
+                    return Err(why.into());
+                }
+            };
+
+        let warning_count = user_mod_history.len();
+        if warning_count < 1 {
+            let reply =
+                messages::info_reply(format!("{user_mention} doesn't have any warnings."), true);
+            context.send(reply).await?;
+
+            return Ok(());
+        }
+
+        let (uuids, moderator_ids, reasons, created_ats) = (
+            user_mod_history
+                .iter()
+                .map(|(uuid, _, _, _, _, _, _)| uuid)
+                .collect::<Vec<&String>>(),
+            user_mod_history
+                .iter()
+                .map(|(_, _, _, moderator_id, _, _, _)| moderator_id)
+                .collect::<Vec<&i64>>(),
+            user_mod_history
+                .iter()
+                .map(|(_, _, _, _, reason, _, _)| reason)
+                .collect::<Vec<&String>>(),
+            user_mod_history
+                .iter()
+                .map(|(_, _, _, _, _, created_at, _)| created_at)
+                .collect::<Vec<&NaiveDateTime>>(),
+        );
+
+        // TODO: Add pagination
+        let uuids_iter = uuids.chunks(25);
+        let mod_ids_iter = moderator_ids.chunks(25);
+        let reasons_iter = reasons.chunks(25);
+        let created_ats_iter = created_ats.chunks(25);
+
+        // Cycle through the chunks of 25, creating pagination embeds
+        let mut embeds = Vec::new();
+        uuids_iter.zip(mod_ids_iter.zip(reasons_iter.zip(created_ats_iter))).for_each(
+            |(uuids, (moderator_ids, (reasons, created_ats)))| {
+                embeds.push(warnings_command_embed(&user, uuids, moderator_ids, reasons, created_ats));
+            }
+        );
+
+        match utilities::paginate::paginate(context, embeds).await {
+            Ok(_) => {
+                let author = context.author().id;
+                info!("@{author} requested @{user_name}'s warnings");
+                Ok(format!("{user_mention} has {warning_count} warning(s)."))
+            }
+            Err(why) => {
+                error!("Failed to paginate: {why:?}");
+                Err(why.to_string())
+            },
         }
     };
 

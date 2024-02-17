@@ -7,6 +7,7 @@ use std::{sync::Arc, time::Duration};
 use tokio::time::sleep;
 use tracing::{error, info};
 use utilities::event_handler::event_handler;
+use utilities::on_error::on_error;
 use utilities::types::GuildSettings;
 
 mod commands;
@@ -26,6 +27,7 @@ pub struct Data {
     pub is_loop_running: AtomicBool,
 } // User data, which is stored and accessible in all command invocations
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
+pub type FrameworkError<'a> = poise::FrameworkError<'a, Data, Error>;
 pub type Context<'a> = poise::Context<'a, Data, Error>;
 pub type PartialContext<'a> = poise::PartialContext<'a, Data, Error>;
 
@@ -192,6 +194,7 @@ async fn main() {
                 timeout(),
                 untimeout(),
                 warn(),
+                warnings(),
                 // Utility commands
                 help(),
                 ping(),
@@ -216,6 +219,7 @@ async fn main() {
                     commands_ran_global.fetch_add(1, Ordering::Relaxed);
                 })
             },
+            on_error: |error| Box::pin(on_error(error)),
             ..Default::default()
         })
         .setup(|context, _ready, framework| {
