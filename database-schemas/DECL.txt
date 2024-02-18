@@ -1,0 +1,68 @@
+###
+The bot works with multiple guilds.
+Each guild has an unique identifier, and some channenls.
+One channel may be designated as a mod log channel.
+One channel may be designated as a message log channel.
+Some of the channels of the guild may be logged, meaning that each message edited
+or deleted will be logged into the message log channel.
+All infractions made by the users will be logged into the mod log channel.
+
+Aside from the guilds, the bot also works with users.
+Each user has an unique identifier, and they may be part of some guilds.
+The bot needs to keep track of the joining date of the user.
+Each user can run an indeterminate amount of commands, which the bot only needs
+to keep track about the amount of commands run.
+Each user may commit some infractions, which the bot only needs to keep track
+about the amount of infractions made.
+Aside from this, each user has some currency that they can spend inside the wish system.
+The currecies the bot needs to keep track of are "acquaint fate", "primogems",
+and "interwined fate".
+
+###
+Inside the wish system the bot works with the following:
+
+A character has an unique identifier alonside a name and a rarity.
+The rarity of the character is either 3, 4, or 5 stars.
+The character may be an event exclusive one.
+The bot needs to keep track about the update were the 4 star character was added.
+
+A weapon has an unique identifier alongside a name and a rarity.
+The rarity of the weapon is either 3, 4, or 5 stars.
+The weapon may be an event exclusive one.
+
+A wish has an unique identifer and a name.
+A wish may be an event wish or the standard wish.
+An event wish may be a weapon or character wish.
+Each wish has a pool.
+A weapon event wish has a pool composed of 5star weapons, 4star characters and weapons,
+and 3star weapons.
+A character event wish has a pool composed of 5star characters, 4star characters and weapons,
+and 3star weapons.
+The standard wish has a pool composed of all the non event characters and weapons, excluding
+the 4star characters added in an update higher than the previous.
+
+Each time the user rolls the standard wish they have a 0.6% chance of it being a 5star character
+or weapon, 5.1% chance of it being a 4star character or weapon and a 94.3% chance of it being a
+3star weapon.
+If the user rolls 9 or more wishes without getting a 4star item the chance of getting a 3star
+item is given to the chance of getting a 4star item.
+If the user rolls 74 wishes without getting a 5star item, the chances of one dropping increase.
+If the user rolls 89 wishes without getting a 5star item, the chances of one dropping
+increases to 100%.
+The consolidated chances are the following:
+  5star: 1.6%
+  4star: 13%
+  3star: 85.4%
+
+A character wish has the same odds than the standard wish, however if the first 4star item
+wasn't the event item, the next 4star item is guaranteed to be one of the event items.
+If the user rolls a 4star or 5star item, there is a 50% chance it will be a promotional one.
+Also, the odd increases and the event guarantee is shared among all character wishes.
+
+The weapon wish has the following odds (base, consolidated) :
+  5star: 0.7% , 1.85%
+  4star: 6%   , 14.5%
+  3star: 93.3%, 83.65%
+The mechanics on the pity are the same, except that the chance of the event weapon dropping is
+75%, the odd increase starts at 64 wishes, and the guarantee 5star drop triggers after the wish
+number 79.
