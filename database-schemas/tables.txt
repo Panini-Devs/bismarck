@@ -1,0 +1,58 @@
+# Any line starting with # is a comment
+# A table is "tbl(...)" has the name "tbl" and the attributes "..."
+# An attribute starting with @ is a primary key
+# An attribute $foo is a foreign key
+# An attribute @$foo is both a primary key and a foreign key
+# If a table has more than one primary key, then both attributes are part of the primary key
+# An attribute foo[] is an array
+# An attribute {foo bar} is composed of two attributes
+
+
+# From the declaration
+guild(@id, channel[], mod_log_channel, message_log_channel, logged_channels[])
+user(@id, {guild join_date first_join_date infractions}[], commands_run, acquaint,
+     interwined, primogems, weapon_pity, standard_pity, character_pity)
+character(@id, name, rarity, isevent, release_update)
+weapon(@id, name, rarity, isevent)
+wish(@id, name, type)
+event_wish(@$id, kind)
+weapon_wish(@$id, 5star_weapons[], 4star_character[], 4star_weapon[], 3star_weapons[])
+character_wish(@$id, 5star_characters[], 4star_character[], 4star_weapon[], 3star_weapons[])
+
+
+# To convert this declaration to first formal form we need to elimate all composite attributes
+# this means to normalize the arrays.
+
+# When we have an array, the table divides into two tables to represent the relation
+# Thus:
+
+# guild turns into
+guild(@id, mod_log_channel, message_log_channel)
+guild_channel(@$guild_id, @channel_id)
+guild_logged_channel(@$guild_id, @channel_id)
+
+# user turns into
+user(@id, ocmmands_run, acquaint, interwined, primogems,
+     weapon_pity, standard_pity, character_pity)
+user_guild(@$user_id, @$guild_id, join_date, first_join_date, infractions)
+
+# character remains unchanged
+# weapon remains unchanged
+# wish remains unchanged
+# event_wish remains unchanged
+
+# weapon_wish turns into
+weapon_wish_5star(@$wish_id, @$id_5star_weapon)
+weapon_wish_4star_character(@$wish_id, @$id_4star_character)
+weapon_wish_4star_weapon(@$wish_id, @$id_4star_weapon)
+weapon_wish_3star_weapon(@$wish_id, @$id_3star_weapon)
+
+# character_wish turns into
+character_wish_5star(@$wish_id, @$id_5star_character)
+character_wish_4star_character(@$wish_id, @$id_4star_character)
+character_wish_4star_weapon(@$wish_id, @$id_4star_weapon)
+character_wish_3star_weapon(@$wish_id, @$id_3star_weapon)
+
+
+# For brebiety I won't explain further, but this representation is already at
+# Boyce-Codd normal form.
