@@ -55,3 +55,9 @@ character_wish_3star_weapon(@$wish_id, @$id_3star_weapon)
 
 # For brebiety I won't explain further, but this representation is already at
 # Boyce-Codd normal form.
+
+# Note that all the X_wish_Xstar have the same format, therefore we can turn all of them into
+# one table.
+
+# Furthermore, we can consider characters and weapons to be both items, therefore, were there
+# were two tables, now is only one.
