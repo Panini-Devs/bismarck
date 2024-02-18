@@ -54,10 +54,10 @@ async fn main() {
         .expect("Couldn't connect to database");
 
     // Run migrations, which updates the database's schema to the latest version.
-    sqlx::migrate!("./migrations")
-        .run(&database)
-        .await
-        .expect("Couldn't run database migrations");
+    // sqlx::migrate!("./migrations")
+    //     .run(&database)
+    //     .await
+    //     .expect("Couldn't run database migrations");
 
     // Initiate guild settings
     let guild_settings = sqlx::query!("SELECT * FROM guild_settings")
