@@ -9,7 +9,8 @@ All infractions made by the users will be logged into the mod log channel.
 
 Aside from the guilds, the bot also works with users.
 Each user has an unique identifier, and they may be part of some guilds.
-The bot needs to keep track of the joining date of the user.
+The bot needs to keep track of the joining date of the user to a guild, alongside the first
+joining date.
 Each user can run an indeterminate amount of commands, which the bot only needs
 to keep track about the amount of commands run.
 Each user may commit some infractions, which the bot only needs to keep track

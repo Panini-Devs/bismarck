@@ -9,7 +9,7 @@
 
 
 # From the declaration
-guild(@id, channel[], mod_log_channel, message_log_channel, logged_channels[])
+guild(@id, mod_log_channel, message_log_channel, logged_channels[])
 user(@id, {guild join_date first_join_date infractions}[], commands_run, acquaint,
      interwined, primogems, weapon_pity, standard_pity, character_pity)
 character(@id, name, rarity, isevent, release_update)
@@ -28,7 +28,6 @@ character_wish(@$id, 5star_characters[], 4star_character[], 4star_weapon[], 3sta
 
 # guild turns into
 guild(@id, mod_log_channel, message_log_channel)
-guild_channel(@$guild_id, @channel_id)
 guild_logged_channel(@$guild_id, @channel_id)
 
 # user turns into
