@@ -31,3 +31,15 @@ lazy_static = "1.4.0"
 dashmap = "^5.5.3"
 uuid = { version = "1.7.0", features = ["v4"] }
 duration-str = "0.7.1"
+
+[build-dependencies]
+sqlx = { version = "0.7.3", "features" = [
+    "macros",
+    "migrate",
+    "chrono",
+    "runtime-tokio",
+    "runtime-tokio-rustls",
+    "sqlite",
+    "sqlx-sqlite",
+] }
+tokio = { version = "1.35.1", features = ["macros", "signal", "rt-multi-thread"] }
