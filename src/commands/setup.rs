@@ -99,7 +99,7 @@ pub async fn set(
             let guild_id = id as i64;
 
             let info = sqlx::query!(
-                "UPDATE guild_settings SET prefix = ? WHERE guild_id = ?",
+                "UPDATE guild SET prefix = ? WHERE id = ?",
                 new_prefix,
                 guild_id
             )

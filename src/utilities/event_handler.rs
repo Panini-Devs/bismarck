@@ -134,26 +134,16 @@ pub async fn event_handler(
             };
 
             let query = sqlx::query!(
-                "INSERT INTO guild_settings (
-                    guild_id,
+                "INSERT INTO guild (
+                    id,
                     prefix,
-                    owner_id
-                ) VALUES (?, ?, ?) ON CONFLICT DO NOTHING",
-                guild_id,
-                "+",
-                owner_id
-            )
-            .execute(&database)
-            .await
-            .unwrap();
-
-            let bot_stat_query = sqlx::query!(
-                "INSERT INTO bot_stats (
-                    guild_id,
+                    owner,
                     commands_ran,
                     songs_played
-                ) VALUES (?, ?, ?) ON CONFLICT DO NOTHING",
+                ) VALUES (?, ?, ?, ?, ?) ON CONFLICT DO NOTHING",
                 guild_id,
+                "+",
+                owner_id,
                 0,
                 0
             )
@@ -162,16 +152,16 @@ pub async fn event_handler(
             .unwrap();
 
             info!("Guild Settings Query: {query:?}");
-            info!("Bot Stats Query: {bot_stat_query:?}");
 
             let fetched_guild =
-                sqlx::query!("SELECT * FROM guild_settings WHERE guild_id = ?", guild_id,)
+                sqlx::query!("SELECT * FROM guild WHERE id = ?", guild_id,)
                     .fetch_one(&database)
                     .await
                     .unwrap();
 
+            // TODO: cleanup
             let fetched_bot_stats =
-                sqlx::query!("SELECT * FROM bot_stats WHERE guild_id = ?", guild_id,)
+                sqlx::query!("SELECT commands_ran, songs_played FROM guild WHERE id = ?", guild_id,)
                     .fetch_one(&database)
                     .await
                     .unwrap();
@@ -191,7 +181,7 @@ pub async fn event_handler(
                 prefix: fetched_guild.prefix,
                 owner_id: owner_id_u64,
                 mute_type: fetched_guild.mute_style.to_string(),
-                mute_role: fetched_guild.mute_role_id.unwrap_or_default() as u64,
+                mute_role: fetched_guild.mute_role.unwrap_or_default() as u64,
                 default_mute_duration: fetched_guild.mute_duration as u64,
             };
 
@@ -212,7 +202,7 @@ pub async fn event_handler(
             {
                 let database = data.sqlite.clone();
                 let guild_id = i64::from(guild.id);
-                sqlx::query!("DELETE FROM guild_settings WHERE guild_id = ?", guild_id)
+                sqlx::query!("DELETE FROM guild WHERE id = ?", guild_id)
                     .execute(&database)
                     .await
                     .unwrap();
