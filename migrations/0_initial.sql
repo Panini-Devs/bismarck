@@ -1,6 +1,6 @@
 CREATE TABLE user (
   id BIGINT PRIMARY KEY NOT NULL,
-  commands_run INT NOT NULL DEFAULT 0,
+  commands_run BIGINT NOT NULL DEFAULT 0,
   acquaint_fate INT NOT NULL DEFAULT 0,
   interwined_fate INT NOT NULL DEFAULT 0,
   primogems INT NOT NULL DEFAULT 0,
@@ -14,11 +14,11 @@ CREATE TABLE guild (
   mod_log_channel BIGINT,
   message_log_channel BIGINT,
   owner BIGINT NOT NULL,
-  commands_ran INT NOT NULL,
+  commands_ran BIGINT NOT NULL,
   songs_played INT NOT NULL,
   mute_role BIGINT,
-  mute_style TEXT NOT NULL,
-  mute_duration BIGINT NOT NULL,
+  mute_style TEXT NOT NULL DEFAULT "timeout",
+  mute_duration BIGINT NOT NULL DEFAULT 3600,
   prefix TEXT NOT NULL DEFAULT '-',
   FOREIGN KEY (owner) REFERENCES user(id)
 );

@@ -97,6 +97,13 @@ pub async fn event_handler(
         serenity::FullEvent::CacheReady { guilds } => {
             info!("Cache is ready with {} guilds", guilds.len());
 
+            // Cache is ready, now we get the total number of guilds with their commands ran and set the global commands to that
+            let sum_commands = sqlx::query!("SELECT SUM(commands_ran) as commands_ran_sum FROM guild").fetch_one(&data.sqlite).await.unwrap().commands_ran_sum.unwrap() as u64;
+
+            data.commands_ran.insert(0, AtomicU64::new(sum_commands));
+
+
+
             // We need to check that the loop is not already running when this event triggers, as this
             // event triggers every time the bot enters or leaves a guild, along every time the ready
             // shard event triggers.
@@ -133,6 +140,19 @@ pub async fn event_handler(
                 (guild_id, owner_id)
             };
 
+            let owner_query = sqlx::query!(
+                "INSERT INTO user (
+                    id
+                ) VALUES (?)
+                ON CONFLICT DO NOTHING",
+                owner_id
+            )
+            .execute(&database)
+            .await
+            .unwrap();
+
+            info!("Owner Query: {owner_query:?}");
+
             let query = sqlx::query!(
                 "INSERT INTO guild (
                     id,
@@ -153,18 +173,19 @@ pub async fn event_handler(
 
             info!("Guild Settings Query: {query:?}");
 
-            let fetched_guild =
-                sqlx::query!("SELECT * FROM guild WHERE id = ?", guild_id,)
-                    .fetch_one(&database)
-                    .await
-                    .unwrap();
+            let fetched_guild = sqlx::query!("SELECT * FROM guild WHERE id = ?", guild_id,)
+                .fetch_one(&database)
+                .await
+                .unwrap();
 
             // TODO: cleanup
-            let fetched_bot_stats =
-                sqlx::query!("SELECT commands_ran, songs_played FROM guild WHERE id = ?", guild_id,)
-                    .fetch_one(&database)
-                    .await
-                    .unwrap();
+            let fetched_bot_stats = sqlx::query!(
+                "SELECT commands_ran, songs_played FROM guild WHERE id = ?",
+                guild_id,
+            )
+            .fetch_one(&database)
+            .await
+            .unwrap();
 
             let owner_id_u64 = owner_id as u64;
             let guild_id_u64 = guild_id as u64;
