@@ -60,7 +60,7 @@ async fn main() {
         .expect("Couldn't run database migrations");
 
     // Initiate guild settings
-    let guild_settings = sqlx::query!("SELECT * FROM guild_settings")
+    let guild_settings = sqlx::query!("SELECT * FROM guild")
         .fetch_all(&database)
         .await
         .expect("Couldn't fetch guild settings");
@@ -68,12 +68,12 @@ async fn main() {
     let guild_settings_map = DashMap::new();
 
     for guild_setting in guild_settings {
-        let guild_id = guild_setting.guild_id as u64;
+        let guild_id = guild_setting.id as u64;
         let guild_settings = GuildSettings {
             prefix: guild_setting.prefix,
-            owner_id: guild_setting.owner_id as u64,
+            owner_id: guild_setting.owner as u64,
             mute_type: guild_setting.mute_style,
-            mute_role: guild_setting.mute_role_id.unwrap_or_default() as u64,
+            mute_role: guild_setting.mute_role.unwrap_or_default() as u64,
             default_mute_duration: guild_setting.mute_duration as u64,
         };
 
@@ -81,7 +81,7 @@ async fn main() {
     }
 
     // Initialize command counter
-    let bot_stats = sqlx::query!("SELECT * FROM bot_stats")
+    let bot_stats = sqlx::query!("SELECT id, commands_ran, songs_played FROM guild")
         .fetch_all(&database)
         .await
         .expect("Couldn't fetch bot stats");
@@ -90,7 +90,7 @@ async fn main() {
     let songs_played = DashMap::new();
 
     for bot_stat in bot_stats {
-        let guild_id = bot_stat.guild_id as u64;
+        let guild_id = bot_stat.id as u64;
 
         let cr = bot_stat.commands_ran as u64;
         let sp = bot_stat.songs_played as u64;
@@ -136,10 +136,10 @@ async fn main() {
                                     // in case guild_join did not load properly
                                     let query_result: Result<SqliteQueryResult, sqlx::Error> =
                                         sqlx::query!(
-                                            "INSERT INTO guild_settings (
-                                            guild_id,
+                                            "INSERT INTO guild (
+                                            id,
                                             prefix,
-                                            owner_id
+                                            owner
                                         ) VALUES (?, ?, ?)",
                                             guild_id,
                                             "+",
