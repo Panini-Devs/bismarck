@@ -12,3 +12,14 @@ pub struct GuildStats {
     pub commands_ran: u64,
     pub songs_played: u64,
 }
+
+#[derive(Clone)]
+pub struct User {
+    pub id: u64,
+    pub acquaint_fate: u64,
+    pub intertwined_fate: u64,
+    pub primogems: u64,
+    pub standard_pity: u64,
+    pub weapon_pity: u64,
+    pub character_pity: u64,
+}

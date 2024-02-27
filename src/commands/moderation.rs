@@ -2,7 +2,10 @@ use std::time::Duration;
 
 use crate::{
     utilities::{
-        self, embeds::warnings_command_embed, messages, models, modlog::{self, ModType}
+        self,
+        embeds::warnings_command_embed,
+        messages, models,
+        modlog::{self, ModType},
     },
     Context, Error,
 };
@@ -681,11 +684,17 @@ pub async fn warnings(
 
         // Cycle through the chunks of 25, creating pagination embeds
         let mut embeds = Vec::new();
-        uuids_iter.zip(mod_ids_iter.zip(reasons_iter.zip(created_ats_iter))).for_each(
-            |(uuids, (moderator_ids, (reasons, created_ats)))| {
-                embeds.push(warnings_command_embed(&user, uuids, moderator_ids, reasons, created_ats));
-            }
-        );
+        uuids_iter
+            .zip(mod_ids_iter.zip(reasons_iter.zip(created_ats_iter)))
+            .for_each(|(uuids, (moderator_ids, (reasons, created_ats)))| {
+                embeds.push(warnings_command_embed(
+                    &user,
+                    uuids,
+                    moderator_ids,
+                    reasons,
+                    created_ats,
+                ));
+            });
 
         match utilities::paginate::paginate(context, embeds).await {
             Ok(_) => {
@@ -696,7 +705,7 @@ pub async fn warnings(
             Err(why) => {
                 error!("Failed to paginate: {why:?}");
                 Err(why.to_string())
-            },
+            }
         }
     };
 

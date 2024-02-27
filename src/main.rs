@@ -8,7 +8,7 @@ use tokio::time::sleep;
 use tracing::{error, info};
 use utilities::event_handler::event_handler;
 use utilities::on_error::on_error;
-use utilities::types::GuildSettings;
+use utilities::types::{GuildSettings, User};
 
 mod commands;
 mod utilities;
@@ -21,7 +21,9 @@ pub struct Data {
     pub reqwest: reqwest::Client,
     pub sqlite: SqlitePool,
     pub guild_data: DashMap<u64, GuildSettings>,
+    pub users: DashMap<u64, User>,
     pub commands_ran: DashMap<u64, AtomicU64>,
+    pub commands_ran_users: DashMap<u64, AtomicU64>,
     pub songs_played: DashMap<u64, AtomicU64>,
     pub shard_manager: Arc<serenity::ShardManager>,
     pub is_loop_running: AtomicBool,
@@ -78,6 +80,29 @@ async fn main() {
         };
 
         guild_settings_map.insert(guild_id, guild_settings);
+    }
+
+    let users = DashMap::new();
+    let commands_ran_user_map = DashMap::new();
+    let users_map = sqlx::query!("SELECT * FROM user")
+        .fetch_all(&database)
+        .await
+        .expect("Couldn't fetch users");
+
+    for user in users_map {
+        let user_id = user.id as u64;
+        let user_stats = User {
+            id: user_id,
+            acquaint_fate: user.acquaint_fate as u64,
+            intertwined_fate: user.interwined_fate as u64,
+            primogems: user.primogems as u64,
+            standard_pity: user.standard_pity as u64,
+            weapon_pity: user.weapon_pity as u64,
+            character_pity: user.character_pity as u64,
+        };
+
+        users.insert(user_id, user_stats);
+        commands_ran_user_map.insert(user_id, AtomicU64::new(user.commands_run as u64));
     }
 
     // Initialize command counter
@@ -213,10 +238,53 @@ async fn main() {
                         let commands_ran =
                             context.data().commands_ran.get(&guild_id.get()).unwrap();
                         commands_ran.fetch_add(1, Ordering::Relaxed);
+
+                        let id = guild_id.get() as i64;
+
+                        if let Err(query) = sqlx::query!(
+                            "UPDATE guild SET commands_ran = commands_ran + 1 WHERE id = ?",
+                            id
+                        ).execute(&context.data().sqlite).await {
+                            error!("Failed to update guild commands ran: {}", query);
+                        }
                     }
 
                     let commands_ran_global = context.data().commands_ran.get(&0).unwrap();
                     commands_ran_global.fetch_add(1, Ordering::Relaxed);
+
+                    if let Err(query) = sqlx::query!(
+                        "UPDATE guild SET commands_ran = commands_ran + 1 WHERE id = 0"
+                    ).execute(&context.data().sqlite).await {
+                        error!("Failed to update global commands ran: {}", query);
+                    }
+
+                    let author_id = u64::from(context.author().id);
+                    if let Some(commands_ran_user) = context.data().commands_ran_users.get(&author_id) {
+                        commands_ran_user.fetch_add(1, Ordering::Relaxed);
+
+                        let author_id = i64::from(context.author().id);
+
+                        if let Err(query) = sqlx::query!(
+                            "UPDATE user SET commands_run = commands_run + 1 WHERE id = ?",
+                            author_id
+                        ).execute(&context.data().sqlite).await {
+                            error!("Failed to update user commands ran: {}", query);
+                        }
+
+                        return;
+                    }
+                    
+                    context.data().commands_ran_users.insert(author_id, AtomicU64::new(1));
+
+                    let author_id = i64::from(context.author().id);
+                    if let Err(query) = sqlx::query!(
+                        "INSERT INTO user (
+                            id
+                        ) VALUES (?)",
+                        author_id
+                    ).execute(&context.data().sqlite).await {
+                        error!("Failed to insert user: {}", query);
+                    }
                 })
             },
             on_error: |error| Box::pin(on_error(error)),
@@ -229,6 +297,8 @@ async fn main() {
                     reqwest: reqwest::Client::new(),
                     sqlite: database,
                     commands_ran,
+                    users,
+                    commands_ran_users: commands_ran_user_map,
                     songs_played,
                     guild_data: guild_settings_map,
                     shard_manager: framework.shard_manager().clone(),
