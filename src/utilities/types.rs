@@ -1,3 +1,5 @@
+use serde::Deserialize;
+
 #[derive(Clone)]
 pub struct GuildSettings {
     pub prefix: String,
@@ -22,4 +24,15 @@ pub struct User {
     pub standard_pity: u64,
     pub weapon_pity: u64,
     pub character_pity: u64,
+}
+
+#[derive(Deserialize, Clone)]
+pub struct Item {
+    pub image_url: String,
+    pub id: u32,
+}
+
+#[derive(Deserialize)]
+pub struct Items {
+    pub items: Vec<Item>,
 }

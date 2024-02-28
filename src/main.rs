@@ -244,7 +244,10 @@ async fn main() {
                         if let Err(query) = sqlx::query!(
                             "UPDATE guild SET commands_ran = commands_ran + 1 WHERE id = ?",
                             id
-                        ).execute(&context.data().sqlite).await {
+                        )
+                        .execute(&context.data().sqlite)
+                        .await
+                        {
                             error!("Failed to update guild commands ran: {}", query);
                         }
                     }
@@ -254,12 +257,17 @@ async fn main() {
 
                     if let Err(query) = sqlx::query!(
                         "UPDATE guild SET commands_ran = commands_ran + 1 WHERE id = 0"
-                    ).execute(&context.data().sqlite).await {
+                    )
+                    .execute(&context.data().sqlite)
+                    .await
+                    {
                         error!("Failed to update global commands ran: {}", query);
                     }
 
                     let author_id = u64::from(context.author().id);
-                    if let Some(commands_ran_user) = context.data().commands_ran_users.get(&author_id) {
+                    if let Some(commands_ran_user) =
+                        context.data().commands_ran_users.get(&author_id)
+                    {
                         commands_ran_user.fetch_add(1, Ordering::Relaxed);
 
                         let author_id = i64::from(context.author().id);
@@ -267,14 +275,20 @@ async fn main() {
                         if let Err(query) = sqlx::query!(
                             "UPDATE user SET commands_run = commands_run + 1 WHERE id = ?",
                             author_id
-                        ).execute(&context.data().sqlite).await {
+                        )
+                        .execute(&context.data().sqlite)
+                        .await
+                        {
                             error!("Failed to update user commands ran: {}", query);
                         }
 
                         return;
                     }
-                    
-                    context.data().commands_ran_users.insert(author_id, AtomicU64::new(1));
+
+                    context
+                        .data()
+                        .commands_ran_users
+                        .insert(author_id, AtomicU64::new(1));
 
                     let author_id = i64::from(context.author().id);
                     if let Err(query) = sqlx::query!(
@@ -282,7 +296,10 @@ async fn main() {
                             id
                         ) VALUES (?)",
                         author_id
-                    ).execute(&context.data().sqlite).await {
+                    )
+                    .execute(&context.data().sqlite)
+                    .await
+                    {
                         error!("Failed to insert user: {}", query);
                     }
                 })

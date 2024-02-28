@@ -98,11 +98,15 @@ pub async fn event_handler(
             info!("Cache is ready with {} guilds", guilds.len());
 
             // Cache is ready, now we get the total number of guilds with their commands ran and set the global commands to that
-            let sum_commands = sqlx::query!("SELECT SUM(commands_ran) as commands_ran_sum FROM guild").fetch_one(&data.sqlite).await.unwrap().commands_ran_sum.unwrap() as u64;
+            let sum_commands =
+                sqlx::query!("SELECT SUM(commands_ran) as commands_ran_sum FROM guild")
+                    .fetch_one(&data.sqlite)
+                    .await
+                    .unwrap()
+                    .commands_ran_sum
+                    .unwrap() as u64;
 
             data.commands_ran.insert(0, AtomicU64::new(sum_commands));
-
-
 
             // We need to check that the loop is not already running when this event triggers, as this
             // event triggers every time the bot enters or leaves a guild, along every time the ready
