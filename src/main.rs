@@ -13,7 +13,9 @@ use utilities::types::{GuildSettings, User};
 mod commands;
 mod utilities;
 
-use crate::commands::{info::*, math::*, moderation::*, owner::*, setup::*, utilities::*};
+use crate::commands::{
+    info::*, math::*, moderation::*, neko::*, owner::*, setup::*, utilities::*, wiki::*,
+};
 
 use sqlx::SqlitePool;
 
@@ -220,6 +222,10 @@ async fn main() {
                 untimeout(),
                 warn(),
                 warnings(),
+                // Neko commands
+                neko(),
+                // Wiki commands
+                wiki(),
                 // Utility commands
                 help(),
                 ping(),

@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 poise = { version = "0.6.1", features = ["cache"] }
-serenity = { version = "0.12.0", default-features = false,features = ["rustls_backend", "chrono", "framework"]}
+serenity = { version = "0.12.1", default-features = false,features = ["rustls_backend", "chrono", "framework"]}
 serde = "1.0.195"
 serde_json = "1.0.111"
 tracing = "0.1.40"

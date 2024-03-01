@@ -36,3 +36,11 @@ pub struct Item {
 pub struct Items {
     pub items: Vec<Item>,
 }
+
+#[derive(Deserialize)]
+pub struct WikiQuery(
+    pub String,
+    pub Vec<String>,
+    pub Vec<String>,
+    pub Vec<String>,
+);
