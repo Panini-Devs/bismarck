@@ -41,6 +41,20 @@ CREATE TABLE user_guild (
   FOREIGN KEY (guild_id) REFERENCES guild(id) ON DELETE CASCADE
 );
 
+CREATE TABLE guild_log (
+  uuid TEXT NOT NULL,
+  guild_id BIGINT,
+  user_id BIGINT,
+  moderator_id BIGINT,
+  action_type TEXT NOT NULL,
+  reason TEXT NOT NULL,
+  time_created TIMESTAMP NOT NULL,
+  PRIMARY KEY (uuid),
+  FOREIGN KEY (guild_id) REFERENCES guild(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES user(id)
+  FOREIGN KEY (moderator_id) REFERENCES user(id)
+);
+
 CREATE TABLE item (
   id INT PRIMARY KEY,
   name TEXT NOT NULL,

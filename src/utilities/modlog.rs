@@ -37,7 +37,7 @@ pub async fn select_modlog(
     let start_time = Instant::now();
 
     let rows = sqlx::query(
-        "SELECT uuid, action_type, user_id, moderator_id, reason, time_created, guild_id FROM mod_log WHERE user_id = ? AND guild_id = ? AND action_type = ?"
+        "SELECT uuid, action_type, user_id, moderator_id, reason, time_created, guild_id FROM guild_log WHERE user_id = ? AND guild_id = ? AND action_type = ?"
     )
         .bind(i64::from(*user_id))
         .bind(i64::from(*guild_id))
@@ -85,7 +85,7 @@ pub async fn delete_mod_log(
 ) -> Result<(), sqlx::Error> {
     let start_time = Instant::now();
 
-    let query = sqlx::query("DELETE FROM mod_log WHERE uuid = ? AND guild_id = ?")
+    let query = sqlx::query("DELETE FROM guild_log WHERE uuid = ? AND guild_id = ?")
         .bind(uuid)
         .bind(i64::from(*guild_id));
 
@@ -114,7 +114,7 @@ pub async fn insert_modlog(
     let uuid = Uuid::new_v4().to_string();
 
     let query = sqlx::query(
-        "INSERT INTO mod_log (uuid, action_type, user_id, moderator_id, reason, time_created, guild_id) VALUES (?, ?, ?, ?, ?, ?, ?)"
+        "INSERT INTO guild_log (uuid, action_type, user_id, moderator_id, reason, time_created, guild_id) VALUES (?, ?, ?, ?, ?, ?, ?)"
     )
         .bind(uuid)
         .bind(action_type.as_str())

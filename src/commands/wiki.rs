@@ -6,7 +6,7 @@ use crate::{utilities::types::WikiQuery, Context, Error};
 #[poise::command(
     prefix_command,
     slash_command,
-    category = "Utilities",
+    category = "Wiki",
     user_cooldown = 5,
     required_bot_permissions = "SEND_MESSAGES"
 )]
@@ -31,13 +31,16 @@ pub async fn wiki(
         let data = res.json::<WikiQuery>().await;
 
         if let Ok(data) = data {
+            let title = "Search results for `".to_string() + &query + "`";
             let embed = CreateReply::default().embed(
                 CreateEmbed::new()
-                    .title(data.0)
+                    .title(title)
                     .description(data.1.join("\n")),
             );
 
             ctx.send(embed).await?;
+
+            // TODO: Implement button interaction to show the summary of the selected article
 
             return Ok(());
         } else {
