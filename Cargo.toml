@@ -6,8 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-poise = { version = "^0.6.1", features = ["cache"] }
-serenity = { version = "^0.12.1", default-features = false, features = ["rustls_backend", "chrono", "framework"]}
+poise = { git = "https://github.com/serenity-rs/poise/", branch = "current", features = ["cache"] }
+serenity = { version = "^0.12.1", default-features = false, features = ["rustls_backend", "chrono", "gateway"] }
 serde = "^1.0.197"
 serde_json = "^1.0.114"
 tracing = "^0.1.40"

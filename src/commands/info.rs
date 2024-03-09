@@ -178,9 +178,12 @@ pub async fn user_avatars(
 )]
 pub async fn bot_stat(context: Context<'_>) -> Result<(), Error> {
     let guild = context.guild().unwrap().id;
+    let guildid = guild.get();
 
-    let commands_ran = context.data().commands_ran.get(&guild.get()).unwrap();
-    let songs_played = context.data().songs_played.get(&guild.get()).unwrap();
+    let data = context.data();
+
+    let commands_ran = data.commands_ran.get(&guildid).unwrap();
+    let songs_played = data.songs_played.get(&guildid).unwrap();
 
     let embed = CreateEmbed::new()
         .title("**Stats**")

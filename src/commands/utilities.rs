@@ -1,7 +1,7 @@
 use crate::{Context, Error};
 use chrono::Duration;
 use chrono::Utc;
-use poise::samples::HelpConfiguration;
+use poise::builtins::PrettyHelpConfiguration;
 use poise::serenity_prelude::CreateEmbed;
 use poise::CreateReply;
 
@@ -40,7 +40,7 @@ pub async fn help(
 
     let extra_text_at_bottom = format.as_str();
 
-    let config = HelpConfiguration {
+    let config = PrettyHelpConfiguration {
         show_subcommands: true,
         show_context_menu_commands: true,
         ephemeral: true,
@@ -48,7 +48,7 @@ pub async fn help(
         include_description: true,
         ..Default::default()
     };
-    poise::builtins::help(context, command.as_deref(), config).await?;
+    poise::builtins::pretty_help(context, command.as_deref(), config).await?;
     Ok(())
 }
 
