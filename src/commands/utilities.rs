@@ -7,6 +7,7 @@ use poise::CreateReply;
 
 /// Show help message
 #[poise::command(
+    slash_command,
     prefix_command,
     track_edits,
     category = "Utility",
