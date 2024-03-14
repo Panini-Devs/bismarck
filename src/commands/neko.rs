@@ -3,6 +3,7 @@ use serenity::all::{CreateEmbed, CreateEmbedFooter};
 
 use crate::{utilities::types::Items, Context, Error};
 
+/// Sends a random Neko image.
 #[poise::command(
     prefix_command,
     slash_command,

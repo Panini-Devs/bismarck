@@ -48,7 +48,7 @@ pub async fn add(
     Ok(())
 }
 
-/// Subtracts two numbers.
+/// Divides two numbers.
 #[poise::command(
     prefix_command,
     slash_command,
@@ -57,11 +57,11 @@ pub async fn add(
 )]
 pub async fn divide(
     context: Context<'_>,
-    #[description = "Number to be divided"] dividend: Option<f64>,
-    #[description = "A number to divide One"] divisor: Option<f64>,
+    #[description = "Number to be divided"] dividend: f64,
+    #[description = "A number to divide One"] divisor: f64,
 ) -> Result<(), Error> {
-    let one = dividend.unwrap_or(1.0);
-    let two = divisor.unwrap_or(1.0);
+    let one = dividend;
+    let two = divisor;
 
     if two == 0.0 {
         let _ = context.say("Divisor cannot be 0!").await;

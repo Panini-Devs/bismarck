@@ -16,6 +16,7 @@ use poise::serenity_prelude::UserId;
 use serenity::model::Timestamp;
 use tracing::{error, info};
 
+/// Bans a user.
 #[poise::command(
     prefix_command,
     slash_command,
@@ -124,6 +125,7 @@ pub async fn ban(
     Ok(())
 }
 
+/// Kicks a user.
 #[poise::command(
     prefix_command,
     slash_command,
@@ -232,6 +234,7 @@ pub async fn kick(
     Ok(())
 }
 
+/// Unbans a user.
 #[poise::command(
     prefix_command,
     slash_command,
@@ -330,6 +333,7 @@ pub async fn unban(
     Ok(())
 }
 
+/// Times out a user.
 #[poise::command(
     prefix_command,
     slash_command,
@@ -457,6 +461,7 @@ pub async fn timeout(
     Ok(())
 }
 
+/// Un-times out a user.
 #[poise::command(
     prefix_command,
     slash_command,
@@ -534,6 +539,7 @@ pub async fn untimeout(
     Ok(())
 }
 
+/// Warns a user.
 #[poise::command(
     prefix_command,
     slash_command,
@@ -610,6 +616,7 @@ pub async fn warn(
     Ok(())
 }
 
+/// Gets a user's warnings.
 #[poise::command(
     prefix_command,
     slash_command,

@@ -3,6 +3,7 @@ use serenity::all::CreateEmbed;
 
 use crate::{utilities::types::WikiQuery, Context, Error};
 
+/// Shows Wikipedia search results.
 #[poise::command(
     prefix_command,
     slash_command,
