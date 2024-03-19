@@ -5,7 +5,7 @@ use crate::{
         self,
         embeds::warnings_command_embed,
         messages, models,
-        modlog::{self, ModType},
+        modlog::{self, ensure_user, ModType},
     },
     Context, Error,
 };
@@ -16,6 +16,7 @@ use poise::serenity_prelude::UserId;
 use serenity::model::Timestamp;
 use tracing::{error, info};
 
+/// Bans a user.
 #[poise::command(
     prefix_command,
     slash_command,
@@ -37,6 +38,15 @@ pub async fn ban(
     let database = &context.data().sqlite;
 
     let user = models::user(context, user_id).await?;
+
+    let member = models::member(context, context.guild_id().unwrap(), user_id).await?;
+
+    let ensure = ensure_user(&member, &user_id, &context.guild_id().unwrap(), database).await;
+
+    if let Err(why) = ensure {
+        let _ = messages::error_response(why.to_string(), true).await;
+        return Ok(());
+    }
 
     let moderator = context.author();
     let moderator_id = moderator.id;
@@ -119,11 +129,15 @@ pub async fn ban(
     if let Err(why) = result {
         let reply = messages::error_reply(&why, true);
         context.send(reply).await?;
+    } else {
+        let reply = messages::info_reply(result.unwrap(), true);
+        context.send(reply).await?;
     }
 
     Ok(())
 }
 
+/// Kicks a user.
 #[poise::command(
     prefix_command,
     slash_command,
@@ -145,6 +159,15 @@ pub async fn kick(
     let database = &context.data().sqlite;
 
     let user = models::user(context, user_id).await?;
+
+    let member = models::member(context, context.guild_id().unwrap(), user_id).await?;
+
+    let ensure = ensure_user(&member, &user_id, &context.guild_id().unwrap(), database).await;
+
+    if let Err(why) = ensure {
+        let _ = messages::error_response(why.to_string(), true).await;
+        return Ok(());
+    }
 
     let moderator = context.author();
     let moderator_id = moderator.id;
@@ -227,11 +250,16 @@ pub async fn kick(
     if let Err(why) = result {
         let reply = messages::error_reply(&why, true);
         context.send(reply).await?;
+    } else {
+        let reply = messages::info_reply(result.unwrap(), true);
+
+        context.send(reply).await?;
     }
 
     Ok(())
 }
 
+/// Unbans a user.
 #[poise::command(
     prefix_command,
     slash_command,
@@ -253,6 +281,15 @@ pub async fn unban(
     let database = &context.data().sqlite;
 
     let user = models::user(context, user_id).await?;
+
+    let member = models::member(context, context.guild_id().unwrap(), user_id).await?;
+
+    let ensure = ensure_user(&member, &user_id, &context.guild_id().unwrap(), database).await;
+
+    if let Err(why) = ensure {
+        let _ = messages::error_response(why.to_string(), true).await;
+        return Ok(());
+    }
 
     let moderator = context.author();
     let moderator_id = moderator.id;
@@ -325,11 +362,16 @@ pub async fn unban(
     if let Err(why) = result {
         let reply = messages::error_reply(&why, true);
         context.send(reply).await?;
+    } else {
+        let reply = messages::info_reply(result.unwrap(), true);
+
+        context.send(reply).await?;
     }
 
     Ok(())
 }
 
+/// Times out a user.
 #[poise::command(
     prefix_command,
     slash_command,
@@ -366,6 +408,15 @@ pub async fn timeout(
         let reply = messages::error_reply("Sorry, but you cannot timeout yourself.", true);
         context.send(reply).await?;
 
+        return Ok(());
+    }
+
+    let member = models::member(context, context.guild_id().unwrap(), user_id).await?;
+
+    let ensure = ensure_user(&member, &user_id, &context.guild_id().unwrap(), database).await;
+
+    if let Err(why) = ensure {
+        let _ = messages::error_response(why.to_string(), true).await;
         return Ok(());
     }
 
@@ -452,11 +503,16 @@ pub async fn timeout(
     if let Err(why) = result {
         let reply = messages::error_reply(&why, true);
         context.send(reply).await?;
+    } else {
+        let reply = messages::info_reply(result.unwrap(), true);
+
+        context.send(reply).await?;
     }
 
     Ok(())
 }
 
+/// Un-times out a user.
 #[poise::command(
     prefix_command,
     slash_command,
@@ -479,6 +535,15 @@ pub async fn untimeout(
     if user.system {
         let reply = messages::error_reply("Cannot untimeout a system user.", false);
         context.send(reply).await?;
+        return Ok(());
+    }
+
+    let member = models::member(context, context.guild_id().unwrap(), user_id).await?;
+
+    let ensure = ensure_user(&member, &user_id, &context.guild_id().unwrap(), database).await;
+
+    if let Err(why) = ensure {
+        let _ = messages::error_response(why.to_string(), true).await;
         return Ok(());
     }
 
@@ -529,11 +594,16 @@ pub async fn untimeout(
     if let Err(why) = result {
         let reply = messages::error_reply(&why, true);
         context.send(reply).await?;
+    } else {
+        let reply = messages::info_reply(result.unwrap(), true);
+
+        context.send(reply).await?;
     }
 
     Ok(())
 }
 
+/// Warns a user.
 #[poise::command(
     prefix_command,
     slash_command,
@@ -553,6 +623,15 @@ pub async fn warn(
     let database = &context.data().sqlite;
 
     let user = models::user(context, user_id).await?;
+
+    let member = models::member(context, context.guild_id().unwrap(), user_id).await?;
+
+    let ensure = ensure_user(&member, &user_id, &context.guild_id().unwrap(), database).await;
+
+    if let Err(why) = ensure {
+        let _ = messages::error_response(why.to_string(), true).await;
+        return Ok(());
+    }
 
     if user.system {
         let reply = messages::error_reply("Cannot warn a system user.", false);
@@ -605,11 +684,16 @@ pub async fn warn(
     if let Err(why) = result {
         let reply = messages::error_reply(&why, true);
         context.send(reply).await?;
+    } else {
+        let reply = messages::info_reply(result.unwrap(), true);
+
+        context.send(reply).await?;
     }
 
     Ok(())
 }
 
+/// Gets a user's warnings.
 #[poise::command(
     prefix_command,
     slash_command,
@@ -627,6 +711,15 @@ pub async fn warnings(
     let database = &context.data().sqlite;
 
     let user = models::user(context, user_id).await?;
+
+    let member = models::member(context, context.guild_id().unwrap(), user_id).await?;
+
+    let ensure = ensure_user(&member, &user_id, &context.guild_id().unwrap(), database).await;
+
+    if let Err(why) = ensure {
+        let _ = messages::error_response(why.to_string(), true).await;
+        return Ok(());
+    }
 
     if user.system {
         let reply = messages::error_reply("Cannot get warnings for a system user.", false);
@@ -711,6 +804,10 @@ pub async fn warnings(
 
     if let Err(why) = result {
         let reply = messages::error_reply(&why, true);
+        context.send(reply).await?;
+    } else {
+        let reply = messages::info_reply(result.unwrap(), true);
+
         context.send(reply).await?;
     }
 

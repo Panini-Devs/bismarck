@@ -43,6 +43,20 @@ pub async fn event_handler(
             );
             info!("Connected to the Discord API (version {api_version}) with {r_sessions}/{t_sessions} sessions remaining.");
             info!("Connected to and serving a total of {guild_count} guild(s).");
+
+            // Cache is ready, now we get the total number of guilds with their commands ran and set the global commands to that
+            let sum_commands =
+                sqlx::query!("SELECT SUM(commands_ran) as commands_ran_sum FROM guild")
+                    .fetch_one(&data.sqlite)
+                    .await
+                    .unwrap()
+                    .commands_ran_sum
+                    .unwrap() as u64;
+
+            data.commands_ran.insert(0, AtomicU64::new(sum_commands));
+
+            // debug
+            info!("Global commands ran: {}", sum_commands);
         }
         serenity::FullEvent::Message { new_message } => {
             if new_message.author.bot {
@@ -96,13 +110,6 @@ pub async fn event_handler(
         }
         serenity::FullEvent::CacheReady { guilds } => {
             info!("Cache is ready with {} guilds", guilds.len());
-
-            // Cache is ready, now we get the total number of guilds with their commands ran and set the global commands to that
-            let sum_commands = sqlx::query!("SELECT SUM(commands_ran) as commands_ran_sum FROM guild").fetch_one(&data.sqlite).await.unwrap().commands_ran_sum.unwrap() as u64;
-
-            data.commands_ran.insert(0, AtomicU64::new(sum_commands));
-
-
 
             // We need to check that the loop is not already running when this event triggers, as this
             // event triggers every time the bot enters or leaves a guild, along every time the ready

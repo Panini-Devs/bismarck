@@ -1,3 +1,4 @@
+use ::serenity::all::Member;
 use chrono::NaiveDateTime;
 use poise::serenity_prelude as serenity;
 use serenity::all::{GuildId, UserId};
@@ -37,7 +38,7 @@ pub async fn select_modlog(
     let start_time = Instant::now();
 
     let rows = sqlx::query(
-        "SELECT uuid, action_type, user_id, moderator_id, reason, time_created, guild_id FROM mod_log WHERE user_id = ? AND guild_id = ? AND action_type = ?"
+        "SELECT uuid, action_type, user_id, moderator_id, reason, time_created, guild_id FROM guild_log WHERE user_id = ? AND guild_id = ? AND action_type = ?"
     )
         .bind(i64::from(*user_id))
         .bind(i64::from(*guild_id))
@@ -85,7 +86,7 @@ pub async fn delete_mod_log(
 ) -> Result<(), sqlx::Error> {
     let start_time = Instant::now();
 
-    let query = sqlx::query("DELETE FROM mod_log WHERE uuid = ? AND guild_id = ?")
+    let query = sqlx::query("DELETE FROM guild_log WHERE uuid = ? AND guild_id = ?")
         .bind(uuid)
         .bind(i64::from(*guild_id));
 
@@ -114,7 +115,7 @@ pub async fn insert_modlog(
     let uuid = Uuid::new_v4().to_string();
 
     let query = sqlx::query(
-        "INSERT INTO mod_log (uuid, action_type, user_id, moderator_id, reason, time_created, guild_id) VALUES (?, ?, ?, ?, ?, ?, ?)"
+        "INSERT INTO guild_log (uuid, action_type, user_id, moderator_id, reason, time_created, guild_id) VALUES (?, ?, ?, ?, ?, ?, ?)"
     )
         .bind(uuid)
         .bind(action_type.as_str())
@@ -136,14 +137,43 @@ pub async fn insert_modlog(
     Ok(())
 }
 
+pub async fn ensure_user(
+    member: &Member,
+    user_id: &UserId,
+    guild_id: &GuildId,
+    pool: &SqlitePool,
+) -> Result<(), sqlx::Error> {
+    let start_time = Instant::now();
+
+    let join = member.joined_at.unwrap().to_rfc2822();
+
+    let query = sqlx::query(
+        "INSERT OR IGNORE INTO user_guild (user_id, guild_id, infractions, join_date) VALUES (?, ?, ?, ?)")
+        .bind(i64::from(*user_id))
+        .bind(i64::from(*guild_id))
+        .bind(0)
+        .bind(join);
+
+    if let Err(why) = query.execute(pool).await {
+        error!("Failed to execute query: {:?}", why);
+        return Err(why);
+    }
+
+    let elapsed_time = start_time.elapsed();
+
+    info!("Ensured user in Users in {elapsed_time:.2?}");
+
+    Ok(())
+}
+
 pub async fn select_modlog_from_users(
     user_id: &UserId,
     pool: &SqlitePool,
 ) -> Result<i32, sqlx::Error> {
     let start_time = Instant::now();
 
-    let query =
-        sqlx::query("SELECT infractions FROM users WHERE user_id = ?").bind(i64::from(*user_id));
+    let query = sqlx::query("SELECT infractions FROM user_guild WHERE user_id = ?")
+        .bind(i64::from(*user_id));
     let row = match query.fetch_one(pool).await {
         Ok(infractions) => infractions,
         Err(why) => {
@@ -173,7 +203,7 @@ pub async fn update_users_set_modlog(
 ) -> Result<(), sqlx::Error> {
     let start_time = Instant::now();
 
-    let query = sqlx::query("UPDATE users SET infractions = ? WHERE user_id = ?")
+    let query = sqlx::query("UPDATE user_guild SET infractions = ? WHERE user_id = ?")
         .bind(infractions)
         .bind(i64::from(*user_id));
     if let Err(why) = query.execute(pool).await {
