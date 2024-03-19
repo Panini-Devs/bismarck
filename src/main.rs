@@ -298,7 +298,7 @@ async fn main() {
 
                     let author_id = i64::from(context.author().id);
                     if let Err(query) = sqlx::query!(
-                        "INSERT INTO user (
+                        "INSERT OR IGNORE INTO user (
                             id
                         ) VALUES (?)",
                         author_id

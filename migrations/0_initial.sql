@@ -31,13 +31,11 @@ CREATE TABLE guild_logged_channel (
 );
 
 CREATE TABLE user_guild (
-  user_id BIGINT,
-  guild_id BIGINT,
+  user_id BIGINT NOT NULL,
+  guild_id BIGINT NOT NULL,
   join_date TEXT NOT NULL,
-  first_join_date TEXT NOT NULL,
   infractions INT NOT NULL DEFAULT 0,
   PRIMARY KEY (user_id, guild_id),
-  FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
   FOREIGN KEY (guild_id) REFERENCES guild(id) ON DELETE CASCADE
 );
 
@@ -51,7 +49,6 @@ CREATE TABLE guild_log (
   time_created TIMESTAMP NOT NULL,
   PRIMARY KEY (uuid),
   FOREIGN KEY (guild_id) REFERENCES guild(id) ON DELETE CASCADE,
-  FOREIGN KEY (user_id) REFERENCES user(id)
   FOREIGN KEY (moderator_id) REFERENCES user(id)
 );
 
