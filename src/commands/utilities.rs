@@ -110,8 +110,63 @@ pub async fn ping(context: Context<'_>) -> Result<(), Error> {
 }
 
 /// Shows the servers the bot is connected to.
-#[poise::command(slash_command, prefix_command)]
+#[poise::command(
+    slash_command,
+    prefix_command,
+    category = "Utility",
+    required_bot_permissions = "SEND_MESSAGES"
+)]
 pub async fn servers(ctx: Context<'_>) -> Result<(), Error> {
     poise::builtins::servers(ctx).await?;
+    Ok(())
+}
+
+/// Shows the status of the bot
+#[poise::command(
+    slash_command,
+    prefix_command,
+    category = "Utility",
+    required_bot_permissions = "SEND_MESSAGES"
+)]
+pub async fn status(ctx: Context<'_>) -> Result<(), Error> {
+    let mut sys = sysinfo::System::new_all();
+    sys.refresh_all();
+
+    let memory = sys.used_memory();
+    let total = sys.total_memory();
+    let free = sys.free_memory();
+
+    let cpus = sys.cpus();
+
+    let system_name = sysinfo::System::name().unwrap_or("Unknown OS".to_string());
+    let kernel_version = sysinfo::System::kernel_version().unwrap_or("Unknown Kernel".to_string());
+    let os_version = sysinfo::System::os_version().unwrap_or("Unknown Version".to_string());
+
+    let embed = CreateEmbed::new()
+        .title("Bot Status")
+        .field(
+            "Memory",
+            format!(
+                "```Used: {} MB\nTotal: {} MB\nFree: {} MB```",
+                memory / 1000000,
+                total / 1000000,
+                free / 1000000
+            ),
+            false,
+        )
+        .field("CPU", format!("```{} Threads```", cpus.len()), false)
+        .field(
+            "System",
+            format!(
+                "```OS Name: {}\nKernel Version: {}\nOS Version: {}```",
+                system_name, kernel_version, os_version
+            ),
+            false,
+        )
+        .color(0x008b_0000);
+
+    let msg = CreateReply::default().embed(embed);
+    ctx.send(msg).await?;
+
     Ok(())
 }
