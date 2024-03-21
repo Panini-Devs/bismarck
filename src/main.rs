@@ -231,6 +231,7 @@ async fn main() {
                 ping(),
                 servers(),
                 prefix(),
+                status(),
                 // Owner commands
                 shutdown(),
             ],
