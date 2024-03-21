@@ -26,7 +26,7 @@ sqlx = { version = "^0.7.3", "features" = [
     "sqlite",
     "sqlx-sqlite",
 ] }
-reqwest = { version = "0.11.24", features = ["json"] }
+reqwest = { version = "0.12.0", features = ["json"] }
 lazy_static = "1.4.0"
 dashmap = "^5.5.3"
 uuid = { version = "1.7.0", features = ["v4"] }
