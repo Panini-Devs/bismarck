@@ -1,3 +1,4 @@
+pub mod command;
 pub mod embeds;
 pub mod event_handler;
 pub mod git;

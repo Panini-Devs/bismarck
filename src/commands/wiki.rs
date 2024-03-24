@@ -32,12 +32,26 @@ pub async fn wiki(
         let data = res.json::<WikiQuery>().await;
 
         if let Ok(data) = data {
-            let title = "Search results for `".to_string() + &query + "`";
+            let title = "Search results for `".to_string() + &query + "`:";
+
+            if data.1.is_empty() {
+                let embed = CreateReply::default().embed(
+                    CreateEmbed::new()
+                        .title(title)
+                        .description("No results for query."),
+                );
+
+                ctx.send(embed).await?;
+                return Ok(());
+            }
+
             let embed = CreateReply::default().embed(
                 CreateEmbed::new()
                     .title(title)
                     .description(data.1.join("\n")),
             );
+
+            // TODO: Make buttons/select menu
 
             ctx.send(embed).await?;
 
