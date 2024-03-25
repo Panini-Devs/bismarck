@@ -1,4 +1,4 @@
-CREATE OR REPLACE TABLE user (
+CREATE IF NOT EXISTS TABLE user (
   id BIGINT PRIMARY KEY NOT NULL,
   commands_run BIGINT NOT NULL DEFAULT 0,
   acquaint_fate INT NOT NULL DEFAULT 0,
@@ -9,7 +9,7 @@ CREATE OR REPLACE TABLE user (
   character_pity INT NOT NULL DEFAULT 0
 );
 
-CREATE OR REPLACE TABLE guild (
+CREATE IF NOT EXISTS TABLE guild (
   id BIGINT PRIMARY KEY NOT NULL,
   mod_log_channel BIGINT,
   message_log_channel BIGINT,
@@ -23,14 +23,14 @@ CREATE OR REPLACE TABLE guild (
   FOREIGN KEY (owner) REFERENCES user(id)
 );
 
-CREATE OR REPLACE TABLE guild_logged_channel (
+CREATE IF NOT EXISTS TABLE guild_logged_channel (
   guild_id BIGINT,
   channel_id,
   PRIMARY KEY (guild_id, channel_id),
   FOREIGN KEY (guild_id) REFERENCES guild(id) ON DELETE CASCADE
 );
 
-CREATE OR REPLACE TABLE user_guild (
+CREATE IF NOT EXISTS TABLE user_guild (
   user_id BIGINT NOT NULL,
   guild_id BIGINT NOT NULL,
   join_date TEXT NOT NULL,
@@ -39,7 +39,7 @@ CREATE OR REPLACE TABLE user_guild (
   FOREIGN KEY (guild_id) REFERENCES guild(id) ON DELETE CASCADE
 );
 
-CREATE OR REPLACE TABLE guild_log (
+CREATE IF NOT EXISTS TABLE guild_log (
   uuid TEXT NOT NULL,
   guild_id BIGINT,
   user_id BIGINT,
@@ -52,7 +52,7 @@ CREATE OR REPLACE TABLE guild_log (
   FOREIGN KEY (moderator_id) REFERENCES user(id)
 );
 
-CREATE OR REPLACE TABLE item (
+CREATE IF NOT EXISTS TABLE item (
   id INT PRIMARY KEY,
   item_name TEXT NOT NULL,
   rarity INT CHECK(rarity BETWEEN 3 AND 5),
@@ -61,7 +61,7 @@ CREATE OR REPLACE TABLE item (
   release_update INT
 );
 
-CREATE OR REPLACE TABLE wish_odds (
+CREATE IF NOT EXISTS TABLE wish_odds (
   wish_type INT PRIMARY KEY,
   rarity5_odds REAL NOT NULL,
   rarity4_odds REAL NOT NULL,
@@ -72,14 +72,14 @@ CREATE OR REPLACE TABLE wish_odds (
   pity5_end INT NOT NULL
 );
 
-CREATE OR REPLACE TABLE wish (
+CREATE IF NOT EXISTS TABLE wish (
   id INT PRIMARY KEY,
   wish_name TEXT NOT NULL,
   wish_type INT,
   FOREIGN KEY (wish_type) REFERENCES wish_odds(wish_type)
 );
 
-CREATE OR REPLACE TABLE wish_item (
+CREATE IF NOT EXISTS TABLE wish_item (
   wish_id INT,
   item_id INT,
   PRIMARY KEY (wish_id, item_id),
