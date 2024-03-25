@@ -1,4 +1,4 @@
-CREATE IF NOT EXISTS TABLE user (
+CREATE TABLE IF NOT EXISTS user (
   id BIGINT PRIMARY KEY NOT NULL,
   commands_run BIGINT NOT NULL DEFAULT 0,
   acquaint_fate INT NOT NULL DEFAULT 0,
@@ -9,11 +9,11 @@ CREATE IF NOT EXISTS TABLE user (
   character_pity INT NOT NULL DEFAULT 0
 );
 
-CREATE IF NOT EXISTS TABLE guild (
+CREATE TABLE IF NOT EXISTS guild (
   id BIGINT PRIMARY KEY NOT NULL,
   mod_log_channel BIGINT,
   message_log_channel BIGINT,
-  guild_owner BIGINT NOT NULL,
+  owner BIGINT NOT NULL,
   commands_ran BIGINT NOT NULL,
   songs_played INT NOT NULL,
   mute_role BIGINT,
@@ -23,14 +23,14 @@ CREATE IF NOT EXISTS TABLE guild (
   FOREIGN KEY (owner) REFERENCES user(id)
 );
 
-CREATE IF NOT EXISTS TABLE guild_logged_channel (
+CREATE TABLE IF NOT EXISTS guild_logged_channel (
   guild_id BIGINT,
   channel_id,
   PRIMARY KEY (guild_id, channel_id),
   FOREIGN KEY (guild_id) REFERENCES guild(id) ON DELETE CASCADE
 );
 
-CREATE IF NOT EXISTS TABLE user_guild (
+CREATE TABLE IF NOT EXISTS user_guild (
   user_id BIGINT NOT NULL,
   guild_id BIGINT NOT NULL,
   join_date TEXT NOT NULL,
@@ -39,7 +39,7 @@ CREATE IF NOT EXISTS TABLE user_guild (
   FOREIGN KEY (guild_id) REFERENCES guild(id) ON DELETE CASCADE
 );
 
-CREATE IF NOT EXISTS TABLE guild_log (
+CREATE TABLE IF NOT EXISTS guild_log (
   uuid TEXT NOT NULL,
   guild_id BIGINT,
   user_id BIGINT,
@@ -52,16 +52,16 @@ CREATE IF NOT EXISTS TABLE guild_log (
   FOREIGN KEY (moderator_id) REFERENCES user(id)
 );
 
-CREATE IF NOT EXISTS TABLE item (
+CREATE TABLE IF NOT EXISTS item (
   id INT PRIMARY KEY,
   item_name TEXT NOT NULL,
   rarity INT CHECK(rarity BETWEEN 3 AND 5),
   is_event INT CHECK(is_event = 0 OR is_event = 1),
-  item_type INT CHECK(type = 0 OR type = 1), -- 0 character, 1 weapon
+  item_type INT CHECK(item_type = 0 OR item_type = 1), -- 0 character, 1 weapon
   release_update INT
 );
 
-CREATE IF NOT EXISTS TABLE wish_odds (
+CREATE TABLE IF NOT EXISTS wish_odds (
   wish_type INT PRIMARY KEY,
   rarity5_odds REAL NOT NULL,
   rarity4_odds REAL NOT NULL,
@@ -72,14 +72,14 @@ CREATE IF NOT EXISTS TABLE wish_odds (
   pity5_end INT NOT NULL
 );
 
-CREATE IF NOT EXISTS TABLE wish (
+CREATE TABLE IF NOT EXISTS wish (
   id INT PRIMARY KEY,
   wish_name TEXT NOT NULL,
   wish_type INT,
   FOREIGN KEY (wish_type) REFERENCES wish_odds(wish_type)
 );
 
-CREATE IF NOT EXISTS TABLE wish_item (
+CREATE TABLE IF NOT EXISTS wish_item (
   wish_id INT,
   item_id INT,
   PRIMARY KEY (wish_id, item_id),
