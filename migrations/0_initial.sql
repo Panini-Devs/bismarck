@@ -1,4 +1,4 @@
-CREATE TABLE user (
+CREATE OR REPLACE TABLE user (
   id BIGINT PRIMARY KEY NOT NULL,
   commands_run BIGINT NOT NULL DEFAULT 0,
   acquaint_fate INT NOT NULL DEFAULT 0,
@@ -9,11 +9,11 @@ CREATE TABLE user (
   character_pity INT NOT NULL DEFAULT 0
 );
 
-CREATE TABLE guild (
+CREATE OR REPLACE TABLE guild (
   id BIGINT PRIMARY KEY NOT NULL,
   mod_log_channel BIGINT,
   message_log_channel BIGINT,
-  owner BIGINT NOT NULL,
+  guild_owner BIGINT NOT NULL,
   commands_ran BIGINT NOT NULL,
   songs_played INT NOT NULL,
   mute_role BIGINT,
@@ -23,14 +23,14 @@ CREATE TABLE guild (
   FOREIGN KEY (owner) REFERENCES user(id)
 );
 
-CREATE TABLE guild_logged_channel (
+CREATE OR REPLACE TABLE guild_logged_channel (
   guild_id BIGINT,
   channel_id,
   PRIMARY KEY (guild_id, channel_id),
   FOREIGN KEY (guild_id) REFERENCES guild(id) ON DELETE CASCADE
 );
 
-CREATE TABLE user_guild (
+CREATE OR REPLACE TABLE user_guild (
   user_id BIGINT NOT NULL,
   guild_id BIGINT NOT NULL,
   join_date TEXT NOT NULL,
@@ -39,7 +39,7 @@ CREATE TABLE user_guild (
   FOREIGN KEY (guild_id) REFERENCES guild(id) ON DELETE CASCADE
 );
 
-CREATE TABLE guild_log (
+CREATE OR REPLACE TABLE guild_log (
   uuid TEXT NOT NULL,
   guild_id BIGINT,
   user_id BIGINT,
@@ -52,22 +52,34 @@ CREATE TABLE guild_log (
   FOREIGN KEY (moderator_id) REFERENCES user(id)
 );
 
-CREATE TABLE item (
+CREATE OR REPLACE TABLE item (
   id INT PRIMARY KEY,
-  name TEXT NOT NULL,
+  item_name TEXT NOT NULL,
   rarity INT CHECK(rarity BETWEEN 3 AND 5),
   is_event INT CHECK(is_event = 0 OR is_event = 1),
-  type INT CHECK(type = 0 OR type = 1), -- 0 character, 1 weapon
+  item_type INT CHECK(type = 0 OR type = 1), -- 0 character, 1 weapon
   release_update INT
 );
 
-CREATE TABLE wish (
-  id INT PRIMARY KEY,
-  name TEXT NOT NULL,
-  type INT CHECK(type IN (1, 2, 3)) -- 0 standard, 1 weapon, 2 character
+CREATE OR REPLACE TABLE wish_odds (
+  wish_type INT PRIMARY KEY,
+  rarity5_odds REAL NOT NULL,
+  rarity4_odds REAL NOT NULL,
+  rarity3_odds REAL NOT NULL,
+  pity4_start INT NOT NULL,
+  pity4_end INT NOT NULL,
+  pity5_start INT NOT NULL,
+  pity5_end INT NOT NULL
 );
 
-CREATE TABLE wish_item (
+CREATE OR REPLACE TABLE wish (
+  id INT PRIMARY KEY,
+  wish_name TEXT NOT NULL,
+  wish_type INT,
+  FOREIGN KEY (wish_type) REFERENCES wish_odds(wish_type)
+);
+
+CREATE OR REPLACE TABLE wish_item (
   wish_id INT,
   item_id INT,
   PRIMARY KEY (wish_id, item_id),
