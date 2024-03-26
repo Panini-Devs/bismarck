@@ -1,5 +1,5 @@
 use poise::CreateReply;
-use serenity::all::CreateEmbed;
+use serenity::all::{CreateEmbed, CreateSelectMenu, CreateSelectMenuOption};
 
 use crate::{utilities::types::WikiQuery, Context, Error};
 
@@ -45,17 +45,43 @@ pub async fn wiki(
                 return Ok(());
             }
 
-            let embed = CreateReply::default().embed(
-                CreateEmbed::new()
-                    .title(title)
-                    .description(data.1.join("\n")),
-            );
-
             // TODO: Make buttons/select menu
+            let mut options = Vec::new();
 
-            ctx.send(embed).await?;
+            for (label, value) in data.1.iter().zip(data.3.iter()) {
+                options.push(CreateSelectMenuOption::new(label, value));
+            }
 
-            // TODO: Implement button interaction to show the summary of the selected article
+            let ctx_id = ctx.id();
+
+            let menu = CreateSelectMenu::new(
+                &ctx_id.to_string(),
+                poise::serenity_prelude::CreateSelectMenuKind::String { options },
+            )
+            .max_values(1)
+            .placeholder("Select a result from below to see summary.");
+
+            let reply = CreateReply::default()
+                .embed(
+                    CreateEmbed::new()
+                        .title(title)
+                        .description(data.1.join("\n")),
+                )
+                .components(vec![poise::serenity_prelude::CreateActionRow::SelectMenu(
+                    menu,
+                )]);
+
+            ctx.send(reply).await?;
+
+            while let Some(interaction) =
+                serenity::collector::ComponentInteractionCollector::new(ctx)
+                    .filter(move |press| press.data.custom_id.starts_with(&ctx_id.to_string()))
+                    .timeout(std::time::Duration::from_secs(3600 * 24))
+                    .await
+            {
+                // TODO: Implement select interaction to show the summary of the selected article
+                
+            }
 
             return Ok(());
         } else {
