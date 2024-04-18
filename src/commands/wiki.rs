@@ -80,7 +80,18 @@ pub async fn wiki(
                     .await
             {
                 // TODO: Implement select interaction to show the summary of the selected article
-                
+                interaction.defer(ctx.http()).await?;
+
+                match interaction.data.kind {
+                    poise::serenity_prelude::ComponentInteractionDataKind::StringSelect { values } => {
+                        if let Some(value) = values.first() {
+                            // interaction.channel_id.say(ctx.http(), "https://en.wikipedia.org/wiki/".to_owned() + value).await?; // debug
+
+                            //TODO: Add summary fetching
+                        }
+                    }
+                    _ => {}
+                }
             }
 
             return Ok(());

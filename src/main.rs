@@ -110,7 +110,7 @@ async fn main() {
     let bot_stats = sqlx::query!("SELECT id, commands_ran, songs_played FROM guild")
         .fetch_all(&database)
         .await
-        .expect("Couldn't fetch bot stats");
+        .expect("Couldn't fetch bot stats"); // fetch all of them, and if database is otherwise unavailable return error and quit the program
 
     let commands_ran = DashMap::new();
     let songs_played = DashMap::new();
@@ -118,8 +118,8 @@ async fn main() {
     for bot_stat in bot_stats {
         let guild_id = bot_stat.id as u64;
 
-        let cr = bot_stat.commands_ran as u64;
-        let sp = bot_stat.songs_played as u64;
+        let cr = bot_stat.commands_ran as u64; //commands ran
+        let sp = bot_stat.songs_played as u64; //songs played
 
         commands_ran.insert(guild_id, AtomicU64::new(cr));
         songs_played.insert(guild_id, AtomicU64::new(sp));
