@@ -1,114 +1,91 @@
-use crate::{Context, Error};
-use rand::{rngs, Rng, SeedableRng};
+use rand::Rng;
 
-#[poise::command(
-    prefix_command,
-    slash_command,
-    category = "Wish",
-    user_cooldown = 5,
-    required_bot_permissions = "SEND_MESSAGES"
-)]
-pub async fn regular_wish_test(
-    context: Context<'_>,
-    #[description = "The seed for the prng"] seed: Option<u64>,
-    #[description = "The amount of rolls"] n: u32,
-) -> Result<(), Error> {
-    let mut state = RegularState::new(0, 0);
-    let mut rng = rngs::StdRng::seed_from_u64(seed.unwrap_or(374829654398254837u64));
+#[cfg(test)]
+mod wish_tests {
+    use super::*;
 
-    let mut s5 = 0f64;
-    let mut s4 = 0f64;
-    let mut s3 = 0f64;
+    const ROLLS: u32 = 1_000_000;
+    const EPS: f64 = 0.001;
 
-    let wish = RegularWish {
-        weights: Weights::new(0.006, 0.051),
-        pity: Pity::new(75, 90, 10),
-        five_star_count: 100,
-        four_star_count: 100,
-        three_star_count: 100,
-    };
+    fn test_tol(result: f64, expected: f64) {
+        let res = result / ROLLS as f64;
+        let high = expected + EPS;
+        let low = expected - EPS;
 
-    for _ in 0..n {
-        let roll;
-        (roll, state) = wish.roll(state, &mut rng);
-        match roll.kind {
-            RollKind::FiveStar => s5 = s5 + 1f64,
-            RollKind::FourStar => s4 = s4 + 1f64,
-            RollKind::ThreeStar => s3 = s3 + 1f64,
-            _ => (), // How did we even get here
-        }
+        assert!(
+            res < high && res > low,
+            "Expected: {}, Got: {}",
+            expected,
+            res
+        );
     }
 
-    _ = context
-        .say(format!(
-            "s5: {}, s4: {}, s3: {}",
-            s5 / n as f64,
-            s4 / n as f64,
-            s3 / n as f64
-        ))
-        .await;
+    #[test]
+    fn regular_wish_test() {
+        let mut state = RegularState::new(0, 0);
+        let mut rng = rand::thread_rng();
 
-    Ok(())
-}
+        let mut s5 = 0.;
+        let mut s4 = 0.;
 
-#[poise::command(
-    prefix_command,
-    slash_command,
-    category = "Wish",
-    user_cooldown = 5,
-    required_bot_permissions = "SEND_MESSAGES"
-)]
-pub async fn featured_wish_test(
-    context: Context<'_>,
-    #[description = "The seed for the prng"] seed: Option<u64>,
-    #[description = "The amount of rolls"] n: u32,
-) -> Result<(), Error> {
-    let mut state = FeaturedState::new(RegularState::new(0, 0), true, true);
-    let mut rng = rngs::StdRng::seed_from_u64(seed.unwrap_or(374829654398254837u64));
-
-    let mut s5 = 0f64;
-    let mut s5_f = 0f64;
-    let mut s4 = 0f64;
-    let mut s4_f = 0f64;
-    let mut s3 = 0f64;
-
-    let wish = FeaturedWish {
-        base: RegularWish {
+        let wish = RegularWish {
             weights: Weights::new(0.006, 0.051),
             pity: Pity::new(75, 90, 10),
             five_star_count: 100,
             four_star_count: 100,
             three_star_count: 100,
-        },
-        five_star_featured_count: 100,
-        four_star_featured_count: 100,
-        featured_chance: 0.5,
-    };
+        };
 
-    for _ in 0..n {
-        let (roll, nstate) = wish.roll(state, &mut rng);
-        state = nstate;
-        match roll.kind {
-            RollKind::FiveStar => s5 = s5 + 1f64,
-            RollKind::FiveStarFeatured => s5_f = s5_f + 1f64,
-            RollKind::FourStar => s4 = s4 + 1f64,
-            RollKind::FourStarFeatured => s4_f = s4_f + 1f64,
-            RollKind::ThreeStar => s3 = s3 + 1f64,
+        for _ in 0..ROLLS {
+            let roll;
+            (roll, state) = wish.roll(state, &mut rng);
+            match roll.kind {
+                RollKind::FiveStar => s5 = s5 + 1.,
+                RollKind::FourStar => s4 = s4 + 1.,
+                _ => (),
+            }
         }
+
+        test_tol(s5, 0.016);
+        test_tol(s4, 0.13);
     }
 
-    _ = context
-        .say(format!(
-            "s5: {}, s5_f: {}, s4: {}, s4_f: {}, s3: {}",
-            s5 / n as f64,
-            s5_f / n as f64,
-            s4 / n as f64,
-            s4_f / n as f64,
-            s3 / n as f64
-        ))
-        .await;
+    #[test]
+    fn featured_wish_test() {
+        let mut state = FeaturedState::new(RegularState::new(0, 0), true, true);
+        let mut rng = rand::thread_rng();
 
-    Ok(())
+        let mut s5 = 0.;
+        let mut s4 = 0.;
+
+        let wish = FeaturedWish {
+            base: RegularWish {
+                weights: Weights::new(0.006, 0.051),
+                pity: Pity::new(75, 90, 10),
+                five_star_count: 100,
+                four_star_count: 100,
+                three_star_count: 100,
+            },
+            five_star_featured_count: 100,
+            four_star_featured_count: 100,
+            featured_chance: 0.5,
+        };
+
+        for _ in 0..ROLLS {
+            let roll;
+            (roll, state) = wish.roll(state, &mut rng);
+            match roll.kind {
+                RollKind::FiveStar => s5 = s5 + 1.,
+                RollKind::FiveStarFeatured => s5 = s5 + 1.,
+                RollKind::FourStar => s4 = s4 + 1.,
+                RollKind::FourStarFeatured => s4 = s4 + 1.,
+                _ => (),
+            }
+        }
+
+        test_tol(s5, 0.016);
+        test_tol(s4, 0.13);
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -172,17 +149,17 @@ impl Weights {
         let s5_odds = if state.since_s5 < pity.s5_start {
             self.s5
         } else {
-            let inc = (1f32 - self.s5) / (pity.s5_end - pity.s5_start) as f32;
+            let inc = (1. - self.s5) / (pity.s5_end - pity.s5_start) as f32;
             self.s5 + inc * (state.since_s5 - pity.s5_start) as f32
         };
 
-        let s4_odds = if pity.s4_proc <= state.since_s4 {
-            1f32 - s5_odds
-        } else {
+        let s4_odds = if state.since_s4 < pity.s4_proc {
             self.s4
+        } else {
+            1.
         };
 
-        [s5_odds, s4_odds + s5_odds]
+        [s5_odds, s4_odds]
     }
 }
 
