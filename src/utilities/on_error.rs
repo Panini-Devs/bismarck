@@ -5,6 +5,7 @@ use crate::FrameworkError;
 use super::messages;
 
 pub async fn on_error(error: FrameworkError<'_>) {
+    error!("Unhandled error occured: {error:?}");
     match error {
         FrameworkError::Setup { .. } | FrameworkError::EventHandler { .. } => {}
         FrameworkError::Command { ctx, .. } => {

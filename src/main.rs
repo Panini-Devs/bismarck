@@ -18,6 +18,7 @@ use crate::commands::{
 
 use sqlx::SqlitePool;
 
+#[derive(Debug)]
 pub struct Data {
     pub reqwest: reqwest::Client,
     pub sqlite: SqlitePool,

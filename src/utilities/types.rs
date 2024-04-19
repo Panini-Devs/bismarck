@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct GuildSettings {
     pub prefix: String,
     pub owner_id: u64,
@@ -9,13 +9,13 @@ pub struct GuildSettings {
     pub default_mute_duration: u64,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct GuildStats {
     pub commands_ran: u64,
     pub songs_played: u64,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct User {
     pub id: u64,
     pub acquaint_fate: u64,
