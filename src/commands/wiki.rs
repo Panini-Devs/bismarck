@@ -1,7 +1,10 @@
 use poise::CreateReply;
-use serenity::all::{CreateEmbed, CreateSelectMenu, CreateSelectMenuOption};
+use serenity::all::{CreateEmbed, CreateMessage, CreateSelectMenu, CreateSelectMenuOption};
 
-use crate::{utilities::types::WikiQuery, Context, Error};
+use crate::{
+    utilities::types::{QueryContainer, WikiQuery},
+    Context, Error,
+};
 
 /// Shows Wikipedia search results.
 #[poise::command(
@@ -71,7 +74,9 @@ pub async fn wiki(
                     menu,
                 )]);
 
-            ctx.send(reply).await?;
+            let handle = ctx.send(reply).await?;
+
+            let refer = handle.into_message().await?;
 
             while let Some(interaction) =
                 serenity::collector::ComponentInteractionCollector::new(ctx)
@@ -83,11 +88,41 @@ pub async fn wiki(
                 interaction.defer(ctx.http()).await?;
 
                 match interaction.data.kind {
-                    poise::serenity_prelude::ComponentInteractionDataKind::StringSelect { values } => {
+                    poise::serenity_prelude::ComponentInteractionDataKind::StringSelect {
+                        values,
+                    } => {
                         if let Some(value) = values.first() {
                             // interaction.channel_id.say(ctx.http(), "https://en.wikipedia.org/wiki/".to_owned() + value).await?; // debug
 
                             //TODO: Add summary fetching
+                            let request = &ctx.data().reqwest;
+                            let url = format!("https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro&explaintext&redirects=1&titles={value}");
+
+                            let get = request.get(url).send().await;
+
+                            let res = match get {
+                                Ok(res) => res.text().await,
+                                Err(_) => {
+                                    return Err("Failed to get data.".into());
+                                }
+                            };
+
+                            let res = res.unwrap();
+
+                            let data: QueryContainer = serde_json::from_str(&res).unwrap();
+                            //info!("{:?}", data);
+
+                            let data = data.query;
+
+                            let embed = CreateEmbed::new()
+                            .title(data.pages.title)
+                            .description(data.pages.extract);
+
+                            let message = CreateMessage::new()
+                            .embed(embed)
+                            .reference_message(&refer);
+                            
+                            ctx.channel_id().send_message(ctx.http(), message).await?;
                         }
                     }
                     _ => {}

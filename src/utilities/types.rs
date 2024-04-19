@@ -1,5 +1,4 @@
 use serde::Deserialize;
-use std::collections::HashMap;
 
 #[derive(Clone)]
 pub struct GuildSettings {
@@ -47,17 +46,22 @@ pub struct WikiQuery(
 );
 
 #[derive(Deserialize, Debug)]
-struct Query {
-    #[serde(deserialize_with ="skip_the_map")]
-    pages: Pages,
+pub struct QueryContainer {
+    pub query: Query,
 }
 
 #[derive(Deserialize, Debug)]
-struct Pages {
-    pageid: i32,
-    ns: i32,
-    title: String,
-    extract: String,
+pub struct Query {
+    #[serde(deserialize_with ="skip_the_map")]
+    pub pages: Pages,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Pages {
+    pub pageid: i32,
+    pub ns: i32,
+    pub title: String,
+    pub extract: String,
 }
 
 fn skip_the_map<'de, D>(d: D) -> Result<Pages, D::Error>
