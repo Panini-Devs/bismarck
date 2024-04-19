@@ -13,7 +13,7 @@ mod commands;
 mod utilities;
 
 use crate::commands::{
-    info::*, math::*, moderation::*, neko::*, owner::*, setup::*, utilities::*, wiki::*,
+    info::*, math::*, moderation::*, neko::*, owner::*, setup::*, utilities::*, wiki::*, wish::*,
 };
 
 use sqlx::SqlitePool;
@@ -165,6 +165,9 @@ async fn main() {
                 neko(),
                 // Wiki commands
                 wiki(),
+                // Wish commands
+                regular_wish_test(),
+                featured_wish_test(),
                 // Utility commands
                 help(),
                 ping(),
