@@ -52,7 +52,7 @@ pub struct QueryContainer {
 
 #[derive(Deserialize, Debug)]
 pub struct Query {
-    #[serde(deserialize_with ="skip_the_map")]
+    #[serde(deserialize_with = "skip_the_map")]
     pub pages: Pages,
 }
 

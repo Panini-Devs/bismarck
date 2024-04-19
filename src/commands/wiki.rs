@@ -115,13 +115,12 @@ pub async fn wiki(
                             let data = data.query;
 
                             let embed = CreateEmbed::new()
-                            .title(data.pages.title)
-                            .description(data.pages.extract);
+                                .title(data.pages.title)
+                                .description(data.pages.extract);
 
-                            let message = CreateMessage::new()
-                            .embed(embed)
-                            .reference_message(&refer);
-                            
+                            let message =
+                                CreateMessage::new().embed(embed).reference_message(&refer);
+
                             ctx.channel_id().send_message(ctx.http(), message).await?;
                         }
                     }

@@ -29,8 +29,8 @@ pub async fn regular_wish_test(
     };
 
     for _ in 0..n {
-        let (roll, nstate) = wish.roll(state, &mut rng);
-        state = nstate;
+        let roll;
+        (roll, state) = wish.roll(state, &mut rng);
         match roll.kind {
             RollKind::FiveStar => s5 = s5 + 1f64,
             RollKind::FourStar => s4 = s4 + 1f64,
@@ -39,7 +39,7 @@ pub async fn regular_wish_test(
         }
     }
 
-    let _ = context
+    _ = context
         .say(format!(
             "s5: {}, s4: {}, s3: {}",
             s5 / n as f64,
@@ -97,7 +97,7 @@ pub async fn featured_wish_test(
         }
     }
 
-    let _ = context
+    _ = context
         .say(format!(
             "s5: {}, s5_f: {}, s4: {}, s4_f: {}, s3: {}",
             s5 / n as f64,
@@ -111,6 +111,7 @@ pub async fn featured_wish_test(
     Ok(())
 }
 
+#[derive(Debug, Clone)]
 struct RegularState {
     since_s5: u32,
     since_s4: u32,
@@ -122,6 +123,7 @@ impl RegularState {
     }
 }
 
+#[derive(Debug, Clone)]
 struct FeaturedState {
     base: RegularState,
     last_s5_featured: bool,
@@ -138,11 +140,13 @@ impl FeaturedState {
     }
 }
 
+#[derive(Debug, Clone)]
 struct Weights {
     s5: f32,
     s4: f32,
 }
 
+#[derive(Debug, Clone)]
 struct Pity {
     s5_start: u32,
     s5_end: u32,
@@ -182,6 +186,7 @@ impl Weights {
     }
 }
 
+#[derive(Debug, Clone)]
 struct RegularWish {
     weights: Weights,
     pity: Pity,
@@ -190,6 +195,7 @@ struct RegularWish {
     three_star_count: u32,
 }
 
+#[derive(Debug, Clone)]
 struct FeaturedWish {
     base: RegularWish,
     five_star_featured_count: u32,
@@ -197,6 +203,7 @@ struct FeaturedWish {
     featured_chance: f64,
 }
 
+#[derive(Debug, Clone)]
 enum RollKind {
     FiveStar,
     FiveStarFeatured,
@@ -205,6 +212,7 @@ enum RollKind {
     ThreeStar,
 }
 
+#[derive(Debug, Clone)]
 struct Roll {
     kind: RollKind,
     index: u32,
