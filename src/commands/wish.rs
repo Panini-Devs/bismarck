@@ -41,10 +41,10 @@ pub async fn regular_wish_test(
 
     let _ = context
         .say(format!(
-            "s5{} s4{} s3{}",
-            s5 / 10000f64,
-            s4 / 10000f64,
-            s3 / 10000f64
+            "s5: {}, s4: {}, s3: {}",
+            s5 / n as f64,
+            s4 / n as f64,
+            s3 / n as f64
         ))
         .await;
 
@@ -99,10 +99,12 @@ pub async fn featured_wish_test(
 
     let _ = context
         .say(format!(
-            "s5{} s4{} s3{}",
-            s5 / 10000f64,
-            s4 / 10000f64,
-            s3 / 10000f64
+            "s5: {}, s5_f: {}, s4: {}, s4_f: {}, s3: {}",
+            s5 / n as f64,
+            s5_f / n as f64,
+            s4 / n as f64,
+            s4_f / n as f64,
+            s3 / n as f64
         ))
         .await;
 
@@ -163,7 +165,7 @@ impl Weights {
     }
 
     fn get_distribution(&self, pity: &Pity, state: &RegularState) -> [f32; 2] {
-        let s5_odds = if pity.s5_start <= state.since_s5 {
+        let s5_odds = if state.since_s5 < pity.s5_start {
             self.s5
         } else {
             let inc = (1f32 - self.s5) / (pity.s5_end - pity.s5_start) as f32;
