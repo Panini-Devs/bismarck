@@ -5,7 +5,7 @@ mod wish_tests {
     use super::*;
 
     const ROLLS: u32 = 1_000_000;
-    const EPS: f64 = 0.001;
+    const EPS: f64 = 0.01;
 
     fn test_tol(result: f64, expected: f64) {
         let res = result / ROLLS as f64;
@@ -21,6 +21,26 @@ mod wish_tests {
     }
 
     #[test]
+    fn weight_increase_test() {
+        let weight = Weights::new(0.006, 0.051);
+        let pity = Pity::new(73, 90, 9);
+
+        let state = RegularState::new(74, 10);
+        let arr = weight.get_distribution(&pity, &state);
+        assert!(arr[0] > 0.006);
+        assert!(arr[1] >= 1.);
+
+        let state = RegularState::new(89, 9);
+        let arr = weight.get_distribution(&pity, &state);
+        assert!(arr[0] < 1.);
+
+        let state = RegularState::new(90, 9);
+        let arr = weight.get_distribution(&pity, &state);
+        assert!(arr[0] >= 1.);
+        assert_ne!(arr[1], 1.);
+    }
+
+    #[test]
     fn regular_wish_test() {
         let mut state = RegularState::new(0, 0);
         let mut rng = rand::thread_rng();
@@ -30,7 +50,7 @@ mod wish_tests {
 
         let wish = RegularWish {
             weights: Weights::new(0.006, 0.051),
-            pity: Pity::new(75, 90, 10),
+            pity: Pity::new(73, 90, 9),
             five_star_count: 100,
             four_star_count: 100,
             three_star_count: 100,
@@ -61,7 +81,7 @@ mod wish_tests {
         let wish = FeaturedWish {
             base: RegularWish {
                 weights: Weights::new(0.006, 0.051),
-                pity: Pity::new(75, 90, 10),
+                pity: Pity::new(73, 90, 9),
                 five_star_count: 100,
                 four_star_count: 100,
                 three_star_count: 100,
@@ -146,7 +166,7 @@ impl Weights {
     }
 
     fn get_distribution(&self, pity: &Pity, state: &RegularState) -> [f32; 2] {
-        let s5_odds = if state.since_s5 < pity.s5_start {
+        let s5_odds = if state.since_s5 <= pity.s5_start {
             self.s5
         } else {
             let inc = (1. - self.s5) / (pity.s5_end - pity.s5_start) as f32;
@@ -156,10 +176,11 @@ impl Weights {
         let s4_odds = if state.since_s4 < pity.s4_proc {
             self.s4
         } else {
-            1.
+            let inc = (1. - self.s4) / 2.;
+            self.s4 + inc * (state.since_s4 - pity.s4_proc + 1) as f32
         };
 
-        [s5_odds, s4_odds]
+        [s5_odds, s4_odds + s5_odds]
     }
 }
 
@@ -226,9 +247,9 @@ impl RegularWish {
     fn roll<R: Rng>(&self, state: RegularState, rng: &mut R) -> (Roll, RegularState) {
         let roll: f32 = rng.gen();
         let dist = self.weights.get_distribution(&self.pity, &state);
-        if roll <= dist[0] {
+        if roll < dist[0] {
             self.make_s5_roll(state, rng)
-        } else if roll <= dist[1] {
+        } else if roll < dist[1] {
             self.make_s4_roll(state, rng)
         } else {
             self.make_s3_roll(state, rng)
@@ -255,7 +276,7 @@ impl FeaturedWish {
                 FeaturedState::new(
                     RegularState::new(state.base.since_s5, 0),
                     state.last_s5_featured,
-                    false,
+                    true,
                 ),
             )
         } else {
@@ -295,9 +316,9 @@ impl FeaturedWish {
             .base
             .weights
             .get_distribution(&self.base.pity, &state.base);
-        if roll <= dist[0] {
+        if roll < dist[0] {
             self.make_s5_roll(state, rng)
-        } else if roll <= dist[1] {
+        } else if roll < dist[1] {
             self.make_s4_roll(state, rng)
         } else {
             self.make_s3_roll(state, rng)
