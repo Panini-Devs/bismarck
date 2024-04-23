@@ -88,6 +88,9 @@ mod wish_tests {
     }
 }
 
+/* To calculate the pity of a regular wish we just needs how many rolls have been made
+ * since the last drop of rarity affected by pity.
+ */
 #[derive(Debug, Clone)]
 struct RegularState {
     since_s5: u32,
@@ -100,6 +103,9 @@ impl RegularState {
     }
 }
 
+/* In addition to the logic behind the regular pity, featured wishes have a featured guarantee
+ * that procs if the last high rarity of a category wasn't a featured item.
+ */
 #[derive(Debug, Clone)]
 struct FeaturedState {
     base: RegularState,
@@ -119,8 +125,8 @@ impl FeaturedState {
 
 #[derive(Debug, Clone)]
 struct Weights {
-    s5: f32,
-    s4: f32,
+    s5: f64,
+    s4: f64,
 }
 
 #[derive(Debug, Clone)]
@@ -141,16 +147,20 @@ impl Pity {
 }
 
 impl Weights {
-    fn new(s5: f32, s4: f32) -> Self {
+    fn new(s5: f64, s4: f64) -> Self {
         Self { s5, s4 }
     }
 
-    fn get_distribution(&self, pity: &Pity, state: &RegularState) -> [f32; 2] {
+    /* Given a pity and a state, get_distribution will calculate the corresponing weights,
+     * i.e.: The real odds after taking into account pity of getting 5star, 4star or 3star items.
+     * The array of odds has a size of two, since the odds of getting a 3star items is (1 - 4star_odds - 5star_odds).
+     */
+    fn get_distribution(&self, pity: &Pity, state: &RegularState) -> [f64; 2] {
         let s5_odds = if state.since_s5 < pity.s5_start {
             self.s5
         } else {
-            let inc = (1. - self.s5) / (pity.s5_end - pity.s5_start) as f32;
-            self.s5 + inc * (state.since_s5 - pity.s5_start) as f32
+            let inc = (1. - self.s5) / (pity.s5_end - pity.s5_start) as f64;
+            self.s5 + inc * (state.since_s5 - pity.s5_start) as f64
         };
 
         let s4_odds = if state.since_s4 < pity.s4_proc {
@@ -163,6 +173,10 @@ impl Weights {
     }
 }
 
+/* A wish is nothing more than the weight (odds of dropping) of the different rarities,
+ * the pity (how does odds change depending on the amount of rolls),
+ * and the data related to the contents of the pool the wish is related to (amount of items)
+ */
 #[derive(Debug, Clone)]
 struct RegularWish {
     weights: Weights,
@@ -172,6 +186,9 @@ struct RegularWish {
     three_star_count: u32,
 }
 
+/* The featured wish is the same, but it has some new data related to the pool (amount of featured items),
+ * and the odds of those items.
+ */
 #[derive(Debug, Clone)]
 struct FeaturedWish {
     base: RegularWish,
@@ -189,6 +206,15 @@ enum RollKind {
     ThreeStar,
 }
 
+/* A roll represent one pull from a certain wish pool, returning the rarity and the index of the element won.
+ * For example, give a wish of the shape of:
+ *   5staritems: "dogwithsword", "madcat", "crazyiguana"
+ *   5starfeatured: "evilgecko", "crimsonfish"
+ *   4staritems: ...
+ *   ...
+ * Roll { kind: RollKind::FiveStar, index: 1 }
+ * would represent "madcat", that is, the FiveStar item in the index 1 relative to the pool.
+ */
 #[derive(Debug, Clone)]
 struct Roll {
     kind: RollKind,
@@ -201,7 +227,11 @@ impl Roll {
     }
 }
 
+/* See FeaturedWish
+ */
 impl RegularWish {
+    /* Create the roll, get a random index from the pool, and increase both pity counts.
+     */
     fn make_s3_roll<R: Rng>(&self, state: RegularState, rng: &mut R) -> (Roll, RegularState) {
         (
             Roll::new(RollKind::ThreeStar, rng.gen_range(0..self.three_star_count)),
@@ -209,6 +239,8 @@ impl RegularWish {
         )
     }
 
+    /* Create the roll, get a random index from the pool, and increase 5 star pity count.
+     */
     fn make_s4_roll<R: Rng>(&self, state: RegularState, rng: &mut R) -> (Roll, RegularState) {
         (
             Roll::new(RollKind::FourStar, rng.gen_range(0..self.four_star_count)),
@@ -216,6 +248,8 @@ impl RegularWish {
         )
     }
 
+    /* Create the roll, get a random index from the pool, and increase 4 star pity count.
+     */
     fn make_s5_roll<R: Rng>(&self, state: RegularState, rng: &mut R) -> (Roll, RegularState) {
         (
             Roll::new(RollKind::FiveStar, rng.gen_range(0..self.five_star_count)),
@@ -224,7 +258,7 @@ impl RegularWish {
     }
 
     fn roll<R: Rng>(&self, state: RegularState, rng: &mut R) -> (Roll, RegularState) {
-        let roll: f32 = rng.gen();
+        let roll: f64 = rng.gen();
         let dist = self.weights.get_distribution(&self.pity, &state);
         if roll <= dist[0] {
             self.make_s5_roll(state, rng)
@@ -245,6 +279,10 @@ impl FeaturedWish {
         )
     }
 
+    /* Same as the regular counterpart.
+     * However we also check if the last item was featured, and if not, another check for the featured chance.
+     * Oh, we also update the pity state accordingly.
+     */
     fn make_s4_roll<R: Rng>(&self, state: FeaturedState, rng: &mut R) -> (Roll, FeaturedState) {
         if !state.last_s4_featured || rng.gen_bool(self.featured_chance) {
             (
@@ -267,6 +305,8 @@ impl FeaturedWish {
         }
     }
 
+    /* See the s4 version.
+     */
     fn make_s5_roll<R: Rng>(&self, state: FeaturedState, rng: &mut R) -> (Roll, FeaturedState) {
         if !state.last_s4_featured || rng.gen_bool(self.featured_chance) {
             (
@@ -290,7 +330,7 @@ impl FeaturedWish {
     }
 
     fn roll<R: Rng>(&self, state: FeaturedState, rng: &mut R) -> (Roll, FeaturedState) {
-        let roll: f32 = rng.gen();
+        let roll: f64 = rng.gen();
         let dist = self
             .base
             .weights
