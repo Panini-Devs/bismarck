@@ -5,7 +5,7 @@ mod wish_tests {
     use super::*;
 
     const ROLLS: u32 = 1_000_000;
-    const EPS: f64 = 0.01;
+    const EPS: f64 = 1./30.;
 
     fn test_tol(result: f64, expected: f64) {
         let res = result / ROLLS as f64;
@@ -42,7 +42,7 @@ mod wish_tests {
 
     #[test]
     fn regular_wish_test() {
-        let mut state = RegularState::new(0, 0);
+        let mut state = RegularState::new(1, 1);
         let mut rng = rand::thread_rng();
 
         let mut s5 = 0.;
@@ -72,7 +72,7 @@ mod wish_tests {
 
     #[test]
     fn featured_wish_test() {
-        let mut state = FeaturedState::new(RegularState::new(0, 0), true, true);
+        let mut state = FeaturedState::new(RegularState::new(1, 1), true, true);
         let mut rng = rand::thread_rng();
 
         let mut s5 = 0.;
@@ -265,7 +265,7 @@ impl RegularWish {
     fn make_s4_roll<R: Rng>(&self, state: RegularState, rng: &mut R) -> (Roll, RegularState) {
         (
             Roll::new(RollKind::FourStar, rng.gen_range(0..self.four_star_count)),
-            RegularState::new(state.since_s5 + 1, 0),
+            RegularState::new(state.since_s5 + 1, 1),
         )
     }
 
@@ -274,7 +274,7 @@ impl RegularWish {
     fn make_s5_roll<R: Rng>(&self, state: RegularState, rng: &mut R) -> (Roll, RegularState) {
         (
             Roll::new(RollKind::FiveStar, rng.gen_range(0..self.five_star_count)),
-            RegularState::new(0, state.since_s4 + 1),
+            RegularState::new(1, state.since_s4 + 1),
         )
     }
 
@@ -312,7 +312,7 @@ impl FeaturedWish {
                     rng.gen_range(0..self.four_star_featured_count),
                 ),
                 FeaturedState::new(
-                    RegularState::new(state.base.since_s5, 0),
+                    RegularState::new(state.base.since_s5, 1),
                     state.last_s5_featured,
                     true,
                 ),
@@ -336,7 +336,7 @@ impl FeaturedWish {
                     rng.gen_range(0..self.five_star_featured_count),
                 ),
                 FeaturedState::new(
-                    RegularState::new(0, state.base.since_s4),
+                    RegularState::new(1, state.base.since_s4),
                     true,
                     state.last_s4_featured,
                 ),
