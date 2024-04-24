@@ -2,7 +2,7 @@ use poise::serenity_prelude as serenity;
 use serenity::{ActivityData, CreateAllowedMentions};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
-use tracing::info;
+use tracing::{info, error};
 
 use crate::utilities::types::GuildSettings;
 use crate::{Data, Error};
@@ -100,12 +100,12 @@ pub async fn event_handler(
         serenity::FullEvent::ThreadCreate { thread } => {
             if let Err(err) = thread.id.join_thread(&context.http).await {
                 let thread_id = thread.id;
-                info!("Failed to succesfully join thread (ID: {thread_id}): {err}")
+                error!("Failed to succesfully join thread (ID: {thread_id}): {err}")
             } else {
                 let name = &thread.name;
                 let guild = &thread.guild(&context.cache).unwrap().name;
                 let id = thread.id.get();
-                info!("Joined new thread: {name} (Server: {guild}, ID: {id})")
+                error!("Joined new thread: {name} (Server: {guild}, ID: {id})")
             }
         }
         serenity::FullEvent::CacheReady { guilds } => {

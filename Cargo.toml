@@ -33,3 +33,12 @@ lazy_static = "1.4.0"
 dashmap = "^5.5.3"
 uuid = { version = "1.7.0", features = ["v4"] }
 duration-str = "0.8.0"
+
+rand = "0.8"
+
+
+[profile.release]
+opt-level = 3
+
+[build]
+rustflags = ["-Z", "threads=8", "target-cpu=native"]

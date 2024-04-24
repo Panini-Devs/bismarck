@@ -744,7 +744,7 @@ pub async fn warnings(
         let warning_count = user_mod_history.len();
         if warning_count < 1 {
             let reply =
-                messages::info_reply(format!("{user_mention} doesn't have any warnings."), true);
+                messages::info_reply(format!("{user_mention} doesn't have any warnings."), false);
             context.send(reply).await?;
 
             return Ok(());

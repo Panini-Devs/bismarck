@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct GuildSettings {
     pub prefix: String,
     pub owner_id: u64,
@@ -9,13 +9,13 @@ pub struct GuildSettings {
     pub default_mute_duration: u64,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct GuildStats {
     pub commands_ran: u64,
     pub songs_played: u64,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct User {
     pub id: u64,
     pub acquaint_fate: u64,
@@ -44,3 +44,31 @@ pub struct WikiQuery(
     pub Vec<String>,
     pub Vec<String>,
 );
+
+#[derive(Deserialize, Debug)]
+pub struct QueryContainer {
+    pub query: Query,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Query {
+    #[serde(deserialize_with = "skip_the_map")]
+    pub pages: Pages,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Pages {
+    pub pageid: i32,
+    pub ns: i32,
+    pub title: String,
+    pub extract: String,
+}
+
+fn skip_the_map<'de, D>(d: D) -> Result<Pages, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let hashmap: std::collections::HashMap<&str, Pages> = serde::Deserialize::deserialize(d)?;
+    let entry = hashmap.into_values().next().unwrap(); // should probably be a proper error?
+    Ok(entry)
+}

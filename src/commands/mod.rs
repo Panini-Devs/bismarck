@@ -7,3 +7,4 @@ pub mod settings;
 pub mod setup;
 pub mod utilities;
 pub mod wiki;
+pub mod wish;
