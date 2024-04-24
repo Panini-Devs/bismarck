@@ -38,8 +38,6 @@ rand = "0.8"
 
 [profile.release]
 opt-level = 3
-lto = true
-strip = true
 
 [build]
 rustflags = ["-Z", "threads=8", "target-cpu=native"]

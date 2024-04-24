@@ -175,7 +175,7 @@ impl Weights {
      * i.e.: The real odds after taking into account pity of getting 5star, 4star or 3star items.
      * The array of odds has a size of two, since the odds of getting a 3star items is (1 - 4star_odds - 5star_odds).
      */
-    fn get_distribution(&self, pity: &Pity, state: &RegularState) -> [f32; 2] {
+    fn get_distribution(&self, pity: &Pity, state: &RegularState) -> [f64; 2] {
         let s5_odds = if state.since_s5 <= pity.s5_start {
             self.s5
         } else {
@@ -187,7 +187,7 @@ impl Weights {
             self.s4
         } else {
             let inc = (1. - self.s4) / 2.;
-            self.s4 + inc * (state.since_s4 - pity.s4_proc + 1) as f32
+            self.s4 + inc * (state.since_s4 - pity.s4_proc + 1) as f64
         };
 
         [s5_odds, s4_odds + s5_odds]
