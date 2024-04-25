@@ -1,8 +1,9 @@
 use poise::serenity_prelude as serenity;
 use serenity::{ActivityData, CreateAllowedMentions};
+use tokio::time;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
-use tracing::{info, error};
+use tracing::{debug, error, info};
 
 use crate::utilities::types::GuildSettings;
 use crate::{Data, Error};
@@ -66,7 +67,10 @@ pub async fn event_handler(
             // trim the end to make it easier for mobile users
             let content = new_message.content.trim_end();
 
+            // calls bot by its mention only, let's respond with an embed telling them what the prefix for help command is
             if content == "<@!1183487567094632638>" || content == "<@1183487567094632638>" {
+                debug!("Received mention from {}", new_message.author.id);
+
                 let prefix = {
                     let guild_data = &data.guild_data;
                     let pf = guild_data;
@@ -118,13 +122,14 @@ pub async fn event_handler(
                 // And of course, we can run more than one thread at different timings.'
                 let guild_len = guilds.len();
                 let cloned = context.clone();
+                let mut interval = time::interval(Duration::from_secs(3));
 
                 tokio::spawn(async move {
                     loop {
                         set_activity(&cloned, guild_len);
-                        tokio::time::sleep(Duration::from_secs(3)).await;
+                        interval.tick().await;
                         set_ad(&cloned);
-                        tokio::time::sleep(Duration::from_secs(3)).await;
+                        interval.tick().await;
                     }
                 });
 
@@ -158,7 +163,7 @@ pub async fn event_handler(
             .await
             .unwrap();
 
-            info!("Owner Query: {owner_query:?}");
+            debug!("Owner Query: {owner_query:?}");
 
             let query = sqlx::query!(
                 "INSERT INTO guild (
@@ -178,7 +183,7 @@ pub async fn event_handler(
             .await
             .unwrap();
 
-            info!("Guild Settings Query: {query:?}");
+            debug!("Guild Settings Query: {query:?}");
 
             let fetched_guild = sqlx::query!("SELECT * FROM guild WHERE id = ?", guild_id,)
                 .fetch_one(&database)
