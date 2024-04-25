@@ -1,7 +1,8 @@
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use sqlx::sqlite::SqliteQueryResult;
-use tracing::error;
+use tokio::time::Instant;
+use tracing::{debug, error};
 
 use crate::{Context, Error, PartialContext};
 
@@ -66,7 +67,12 @@ pub async fn get_prefix(context: PartialContext<'_>) -> Result<Option<String>, E
     }
 }
 
-pub async fn pre_command(context: Context<'_>) -> () {
+pub async fn pre_command(context: Context<'_>) {
+
+    debug!("{} (UID: {}) ran {}", context.author().name, context.author().id, context.command().name);
+
+    let start_time = Instant::now();
+
     if let Some(guild_id) = context.guild_id() {
         let commands_ran = context.data().commands_ran.get(&guild_id.get()).unwrap();
         commands_ran.fetch_add(1, Ordering::Relaxed);
@@ -131,4 +137,8 @@ pub async fn pre_command(context: Context<'_>) -> () {
     {
         error!("Failed to insert user: {}", query);
     }
+
+    let elapsed_time = start_time.elapsed();
+
+    debug!("Precommand ran in {elapsed_time:.2?}");
 }

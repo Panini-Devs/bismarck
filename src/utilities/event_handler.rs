@@ -3,6 +3,7 @@ use serenity::{ActivityData, CreateAllowedMentions};
 use tokio::time;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
+
 use tracing::{debug, error, info};
 
 use crate::utilities::types::GuildSettings;
