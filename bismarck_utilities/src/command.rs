@@ -4,7 +4,10 @@ use sqlx::sqlite::SqliteQueryResult;
 use tokio::time::Instant;
 use tracing::{debug, error};
 
-use bismarck_core::{context::{Context, PartialContext}, error::Error};
+use bismarck_core::{
+    context::{Context, PartialContext},
+    error::Error,
+};
 
 pub async fn get_prefix(context: PartialContext<'_>) -> Result<Option<String>, Error> {
     if let Some(guild_id) = context.guild_id {

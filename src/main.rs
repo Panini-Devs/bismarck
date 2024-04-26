@@ -1,5 +1,8 @@
 use bismarck_core::context::PartialContext;
 use bismarck_core::data::Data;
+use bismarck_core::types::{GuildSettings, User};
+use bismarck_events::event_handler::event_handler;
+use bismarck_events::on_error::on_error;
 use dashmap::DashMap;
 use poise::serenity_prelude as serenity;
 use std::env;
@@ -7,9 +10,6 @@ use std::sync::atomic::{AtomicBool, AtomicU64};
 use std::{sync::Arc, time::Duration};
 use tokio::time::sleep;
 use tracing::{error, info};
-use bismarck_events::event_handler::event_handler;
-use bismarck_events::on_error::on_error;
-use bismarck_core::types::{GuildSettings, User};
 
 use bismarck_commands::{
     info::*, math::*, moderation::*, neko::*, owner::*, setup::*, utilities::*, wiki::*,
@@ -20,7 +20,7 @@ async fn main() {
     dotenv::dotenv().expect("Failed to load .env file");
     // gets token, exits if no token
     let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
-    let intents = serenity::GatewayIntents::all();
+    let intents = bismarck_core::gateway_intents().await;
 
     // Initialize the logger to use environment variables.
     //

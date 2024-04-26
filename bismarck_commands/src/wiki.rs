@@ -1,7 +1,11 @@
 use poise::CreateReply;
 use serenity::all::{CreateEmbed, CreateMessage, CreateSelectMenu, CreateSelectMenuOption};
 
-use bismarck_core::{context::Context, error::Error, types::{WikiQuery, QueryContainer}};
+use bismarck_core::{
+    context::Context,
+    error::Error,
+    types::{QueryContainer, WikiQuery},
+};
 
 /// Shows Wikipedia search results.
 #[poise::command(

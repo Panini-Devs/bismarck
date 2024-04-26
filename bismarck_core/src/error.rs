@@ -1,5 +1,5 @@
-use poise;
 use data::Data;
+use poise;
 
 use crate::data;
 

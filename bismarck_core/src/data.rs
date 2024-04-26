@@ -1,9 +1,9 @@
+use crate::types::{GuildSettings, User};
 use dashmap::DashMap;
 use poise::serenity_prelude as serenity;
+use sqlx::SqlitePool;
 use std::sync::atomic::{AtomicBool, AtomicU64};
 use std::sync::Arc;
-use sqlx::SqlitePool;
-use crate::types::{GuildSettings, User};
 
 #[derive(Debug)]
 pub struct Data {
