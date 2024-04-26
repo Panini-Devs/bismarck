@@ -1,3 +1,5 @@
+use bismarck_core::context::PartialContext;
+use bismarck_core::data::Data;
 use dashmap::DashMap;
 use poise::serenity_prelude as serenity;
 use std::env;
@@ -5,35 +7,13 @@ use std::sync::atomic::{AtomicBool, AtomicU64};
 use std::{sync::Arc, time::Duration};
 use tokio::time::sleep;
 use tracing::{error, info};
-use utilities::event_handler::event_handler;
-use utilities::on_error::on_error;
-use utilities::types::{GuildSettings, User};
+use bismarck_events::event_handler::event_handler;
+use bismarck_events::on_error::on_error;
+use bismarck_core::types::{GuildSettings, User};
 
-mod commands;
-mod utilities;
-
-use crate::commands::{
+use bismarck_commands::{
     info::*, math::*, moderation::*, neko::*, owner::*, setup::*, utilities::*, wiki::*,
 };
-
-use sqlx::SqlitePool;
-
-#[derive(Debug)]
-pub struct Data {
-    pub reqwest: reqwest::Client,
-    pub sqlite: SqlitePool,
-    pub guild_data: DashMap<u64, GuildSettings>,
-    pub users: DashMap<u64, User>,
-    pub commands_ran: DashMap<u64, AtomicU64>,
-    pub commands_ran_users: DashMap<u64, AtomicU64>,
-    pub songs_played: DashMap<u64, AtomicU64>,
-    pub shard_manager: Arc<serenity::ShardManager>,
-    pub is_loop_running: AtomicBool,
-} // User data, which is stored and accessible in all command invocations
-pub type Error = Box<dyn std::error::Error + Send + Sync>;
-pub type FrameworkError<'a> = poise::FrameworkError<'a, Data, Error>;
-pub type Context<'a> = poise::Context<'a, Data, Error>;
-pub type PartialContext<'a> = poise::PartialContext<'a, Data, Error>;
 
 #[tokio::main]
 async fn main() {
@@ -139,7 +119,7 @@ async fn main() {
                 execute_self_messages: false,
                 // dynamic prefix support
                 dynamic_prefix: Some(|context: PartialContext| {
-                    Box::pin(async move { crate::utilities::command::get_prefix(context).await })
+                    Box::pin(async move { bismarck_utilities::command::get_prefix(context).await })
                 }),
                 ..Default::default()
             },
@@ -180,7 +160,7 @@ async fn main() {
                 Box::pin(event_handler(context, event, framework, data))
             },
             pre_command: |context| {
-                Box::pin(async move { crate::utilities::command::pre_command(context).await })
+                Box::pin(async move { bismarck_utilities::command::pre_command(context).await })
             },
             on_error: |error| Box::pin(on_error(error)),
             ..Default::default()

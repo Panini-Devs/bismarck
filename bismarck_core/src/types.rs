@@ -45,7 +45,6 @@ pub struct Items {
     pub items: Vec<Item>,
 }
 
-
 // Wikipedia API needed deserialization types below
 
 #[derive(Deserialize)]

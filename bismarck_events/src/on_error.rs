@@ -1,8 +1,7 @@
 use tracing::error;
 
-use crate::FrameworkError;
-
-use super::messages;
+use bismarck_core::error::FrameworkError;
+use bismarck_utilities::messages;
 
 pub async fn on_error(error: FrameworkError<'_>) {
     error!("Unhandled error occured: {error:?}");

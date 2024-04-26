@@ -5,7 +5,7 @@ mod wish_tests {
     use super::*;
 
     const ROLLS: u32 = 1_000_000;
-    const EPS: f64 = 1./300.;
+    const EPS: f64 = 1. / 300.;
 
     fn test_tol(result: f64, expected: f64) {
         let res = result / ROLLS as f64;

@@ -1,4 +1,4 @@
-use crate::{Context, Error};
+use bismarck_core::{context::Context, error::Error};
 
 /// Multiplies two numbers.
 #[poise::command(

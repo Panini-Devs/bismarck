@@ -4,7 +4,7 @@ use sqlx::sqlite::SqliteQueryResult;
 use tokio::time::Instant;
 use tracing::{debug, error};
 
-use crate::{Context, Error, PartialContext};
+use bismarck_core::{context::{Context, PartialContext}, error::Error};
 
 pub async fn get_prefix(context: PartialContext<'_>) -> Result<Option<String>, Error> {
     if let Some(guild_id) = context.guild_id {
@@ -68,8 +68,12 @@ pub async fn get_prefix(context: PartialContext<'_>) -> Result<Option<String>, E
 }
 
 pub async fn pre_command(context: Context<'_>) {
-
-    debug!("{} (UID: {}) ran {}", context.author().name, context.author().id, context.command().name);
+    debug!(
+        "{} (UID: {}) ran {}",
+        context.author().name,
+        context.author().id,
+        context.command().name
+    );
 
     let start_time = Instant::now();
 
