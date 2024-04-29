@@ -130,10 +130,7 @@ async fn main() {
                 user_avatars(),
                 bot_stat(),
                 // Math commands
-                multiply(),
-                add(),
-                divide(),
-                subtract(),
+                // TODO: math(),
                 // Moderation commands
                 ban(),
                 kick(),
