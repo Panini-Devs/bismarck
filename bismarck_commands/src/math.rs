@@ -215,7 +215,7 @@ impl Stack {
     }
 
     fn popf(&mut self) -> f32 {
-        unsafe { transmute::<u32, f32>(self.pop()) }
+        f32::from_bits(self.pop())
     }
 
     fn push(&mut self, v: u32) {
@@ -227,7 +227,7 @@ impl Stack {
     }
 
     fn pushf(&mut self, v: f32) {
-        self.push(unsafe { transmute::<f32, u32>(v) });
+        self.push(v.to_bits());
     }
 
     fn pushs(&mut self, v: i32) {
@@ -249,7 +249,7 @@ impl std::fmt::Debug for ByteCode {
         let mut asnum = false;
         for code in self.0.iter() {
             if asnum {
-                write!(f, "{:x}\n", code)?;
+                writeln!(f, "{:x}", code)?;
                 asnum = false;
             } else {
                 write!(f, "{:?}", unsafe { transmute::<u32, Operation>(*code) })?;
@@ -257,7 +257,7 @@ impl std::fmt::Debug for ByteCode {
                     asnum = true;
                     write!(f, " ")?;
                 } else {
-                    write!(f, "\n")?;
+                    writeln!(f)?;
                 }
             }
         }
@@ -279,12 +279,12 @@ fn execute(operations: ByteCode) -> Result<Ret, &'static str> {
             }
             Op::Test => {
                 if s.pop() == 0 {
-                    i = i + 1;
+                    i += 1;
                 }
             }
             Op::Nop => (),
             Op::Const32 => {
-                i = i + 1;
+                i += 1;
                 s.push(operations.0[i]);
             }
             Op::I32CastF32S => {
@@ -324,7 +324,7 @@ fn execute(operations: ByteCode) -> Result<Ret, &'static str> {
                 let r = s.pop();
                 let l = s.pop();
                 fn asf32(arg: u32) -> f32 {
-                    unsafe { transmute::<u32, f32>(arg) }
+                    f32::from_bits(arg)
                 }
 
                 fn asi32(arg: u32) -> i32 {
@@ -377,7 +377,7 @@ fn execute(operations: ByteCode) -> Result<Ret, &'static str> {
                 }
             }
         }
-        i = i + 1;
+        i += 1;
     }
 }
 
@@ -565,13 +565,12 @@ impl Parser {
 
     fn peek(&mut self) -> Token {
         self.tokens
-            .get(self.index)
-            .map(|t| t.clone())
+            .get(self.index).cloned()
             .unwrap_or(Token::Eof)
     }
 
     fn eat(&mut self) {
-        self.index = self.index + 1
+        self.index += 1
     }
 
     fn next(&mut self) -> Token {
@@ -638,12 +637,12 @@ impl Parser {
                 p
             }
             Token::Operator(Opc::Plus) => {
-                let p = self.primary()?;
-                p
+                
+                self.primary()?
             }
             Token::F32(n) => {
                 self.add_op(Operation::Const32);
-                self.add_32(unsafe { transmute::<f32, u32>(n) });
+                self.add_32(n.to_bits());
                 Type::F32
             }
             Token::I32(n) => {

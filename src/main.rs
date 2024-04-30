@@ -12,7 +12,7 @@ use tokio::time::sleep;
 use tracing::{error, info};
 
 use bismarck_commands::{
-    info::*, math::*, moderation::*, neko::*, owner::*, setup::*, utilities::*, wiki::*,
+    info::*, moderation::*, neko::*, owner::*, setup::*, utilities::*, wiki::*,
 };
 
 #[tokio::main]

@@ -60,8 +60,8 @@ mod wish_tests {
             let roll;
             (roll, state) = wish.roll(state, &mut rng);
             match roll.kind {
-                RollKind::FiveStar => s5 = s5 + 1.,
-                RollKind::FourStar => s4 = s4 + 1.,
+                RollKind::FiveStar => s5 += 1.,
+                RollKind::FourStar => s4 += 1.,
                 _ => (),
             }
         }
@@ -95,10 +95,10 @@ mod wish_tests {
             let roll;
             (roll, state) = wish.roll(state, &mut rng);
             match roll.kind {
-                RollKind::FiveStar => s5 = s5 + 1.,
-                RollKind::FiveStarFeatured => s5 = s5 + 1.,
-                RollKind::FourStar => s4 = s4 + 1.,
-                RollKind::FourStarFeatured => s4 = s4 + 1.,
+                RollKind::FiveStar => s5 += 1.,
+                RollKind::FiveStarFeatured => s5 += 1.,
+                RollKind::FourStar => s4 += 1.,
+                RollKind::FourStarFeatured => s4 += 1.,
                 _ => (),
             }
         }
