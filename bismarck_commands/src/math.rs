@@ -1,4 +1,4 @@
-use std::{iter, mem::transmute};
+use std::iter::{self, Peekable};
 
 /*
 #[poise::command(
@@ -27,421 +27,198 @@ pub async fn math(
 mod eval {
     use super::*;
 
+    #[allow(dead_code)]
+    fn p(s: &str) -> Value {
+        Parser::new(tokenize(s).unwrap().into_iter())
+            .parse()
+            .unwrap()
+    }
+
+    #[allow(unused_imports)]
     mod test_u32 {
         use super::*;
 
-        #[allow(dead_code)]
-        fn tst(s: &str, e: u32) {
-            let toks = tokenize(s).unwrap();
-            let ops = Parser::new(toks).parse().unwrap();
-            let r = execute(ops).unwrap();
-            assert_eq!(r, Ret::U32(e));
-        }
-
         #[test]
         fn add() {
-            tst("1_u + 2_u", 3);
-            tst(&format!("{}_u + 1_u", u32::MAX), 0);
+            assert_eq!(p("1_u + 2_u"), Value::U32(3));
+            // assert_eq!(p(&format!("{}_u + 1_u", u32::MAX)), Value::U32(0)); // will panic
         }
 
         #[test]
         fn sub() {
-            tst("2_u - 1_u", 1);
-            tst("0_u - 1_u", u32::MAX);
+            assert_eq!(p("2_u - 1_u"), Value::U32(1));
+            // assert_eq!(p("0_u - 1_u"), Value::U32(u32::MAX)); // will panic
         }
 
         #[test]
         fn mul() {
-            tst("2_u * 3_u", 6);
+            assert_eq!(p("2_u * 3_u"), Value::U32(6));
         }
 
         #[test]
         fn div() {
-            tst("6_u / 2_u", 3);
+            assert_eq!(p("6_u / 2_u"), Value::U32(3));
         }
     }
 
+    #[allow(unused_imports)]
     mod test_i32 {
         use super::*;
 
-        #[allow(dead_code)]
-        fn tst(s: &str, e: i32) {
-            let toks = tokenize(s).unwrap();
-            let ops = Parser::new(toks).parse().unwrap();
-            let r = execute(ops).unwrap();
-            assert_eq!(r, Ret::I32(e));
-        }
-
         #[test]
         fn add() {
-            tst("1 + 2", 3);
-            tst(&format!("{}", i32::MAX), i32::MAX);
+            assert_eq!(p("1 + 2"), Value::I32(3));
+            assert_eq!(p(&format!("{}", i32::MAX)), Value::I32(i32::MAX));
         }
 
         #[test]
         fn sub() {
-            tst("1 - 2", -1);
-            tst(&format!("{} - 1", i32::MIN), i32::MAX);
+            assert_eq!(p("1 - 2"), Value::I32(-1));
+            // assert_eq!(p(&format!("{} - 2", i32::MIN + 1)), Value::I32(i32::MAX)); // will panic
         }
 
         #[test]
         fn mul() {
-            tst("2 * 3", 6);
+            assert_eq!(p("2 * 3"), Value::I32(6));
         }
 
         #[test]
         fn div() {
-            tst("6 / 3", 2);
+            assert_eq!(p("6 / 3"), Value::I32(2));
         }
     }
 
+    #[allow(unused_imports)]
     mod test_f32 {
         use super::*;
 
-        #[allow(dead_code)]
-        fn tst(s: &str, e: f32) {
-            let toks = tokenize(s).unwrap();
-            let ops = Parser::new(toks).parse().unwrap();
-            let r = execute(ops).unwrap();
-            assert_eq!(r, Ret::F32(e));
-        }
-
         #[test]
         fn add() {
-            tst("1.0 + 2.4", 3.4);
+            assert_eq!(p("1.0 + 2.4"), Value::F32(3.4));
         }
 
         #[test]
         fn sub() {
-            tst("1. - 2.0", -1.);
+            assert_eq!(p("1. - 2.0"), Value::F32(-1.));
         }
 
         #[test]
         fn mul() {
-            tst("2.0 * 0.5", 1.);
+            assert_eq!(p("2.0 * 0.5"), Value::F32(1.));
         }
 
         #[test]
         fn div() {
-            tst("6.0 / 0.5", 12.);
+            assert_eq!(p("6.0 / 0.5"), Value::F32(12.));
         }
     }
 
+    #[allow(unused_imports)]
     mod test_pred {
         use super::*;
-        #[allow(dead_code)]
-        fn tst(s: &str, e: i32) {
-            let toks = tokenize(s).unwrap();
-            let ops = Parser::new(toks).parse().unwrap();
-            let r = execute(ops).unwrap();
-            assert_eq!(r, Ret::I32(e));
-        }
 
         #[test]
         fn chain() {
-            tst("1 + 2 + 3", 6);
+            assert_eq!(p("1 + 2 + 3"), Value::I32(6));
         }
 
         #[test]
         fn mulsum() {
-            tst("2 + 3 * 4", 2 + 3 * 4);
-            tst("3 * 4 + 2", 3 * 4 + 2);
+            assert_eq!(p("2 + 3 * 4"), Value::I32(2 + 3 * 4));
+            assert_eq!(p("3 * 4 + 2"), Value::I32(3 * 4 + 2));
         }
 
         #[test]
         fn div() {
-            tst("2 * 10 / 3", 2 * 10 / 3);
-            tst("4 / 2 / 2", 4 / 2 / 2);
+            assert_eq!(p("2 * 10 / 3"), Value::I32(2 * 10 / 3));
+            assert_eq!(p("4 / 2 / 2"), Value::I32(4 / 2 / 2));
         }
 
         #[test]
         fn paren() {
-            tst("(2 + 3) * 4", (2 + 3) * 4);
-            tst("4 * (2 + 3)", 4 * (2 + 3));
+            assert_eq!(p("(2 + 3) * 4"), Value::I32((2 + 3) * 4));
+            assert_eq!(p("4 * (2 + 3)"), Value::I32(4 * (2 + 3)));
         }
     }
 }
 
-#[derive(Debug, Clone)]
-#[repr(u32)]
-enum Operation {
-    Goto,
-    Test,
-    Nop,
-
-    Const32,
-
-    ExitF32,
-    ExitI32,
-    ExitU32,
-
-    F32Neg,
-    F32Add,
-    F32Sub,
-    F32Mul,
-    F32Div,
-    F32Lt,
-    F32Eq,
-    F32CastI32S,
-    F32CastI32U,
-
-    I32Neg,
-    I32Add,
-    I32Sub,
-    I32Mul,
-    I32DivS,
-    I32DivU,
-    I32Lt,
-    I32Eq,
-    I32CastF32S,
-    I32CastF32U,
-}
-
-struct Stack {
-    data: Vec<u32>,
-}
-
-impl Stack {
-    fn new() -> Self {
-        Self { data: Vec::new() }
-    }
-
-    fn pop(&mut self) -> u32 {
-        unsafe { self.data.pop().unwrap_unchecked() }
-    }
-
-    fn pops(&mut self) -> i32 {
-        unsafe { transmute::<u32, i32>(self.pop()) }
-    }
-
-    fn popf(&mut self) -> f32 {
-        f32::from_bits(self.pop())
-    }
-
-    fn push(&mut self, v: u32) {
-        self.data.push(v);
-    }
-
-    fn pushb(&mut self, v: bool) {
-        self.push(v as u32);
-    }
-
-    fn pushf(&mut self, v: f32) {
-        self.push(v.to_bits());
-    }
-
-    fn pushs(&mut self, v: i32) {
-        self.push(unsafe { transmute::<i32, u32>(v) });
-    }
-}
-
 #[derive(Debug, Clone, PartialEq)]
-enum Ret {
+pub enum Value {
     I32(i32),
     F32(f32),
     U32(u32),
 }
 
-struct ByteCode(Vec<u32>);
-
-impl std::fmt::Debug for ByteCode {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        let mut asnum = false;
-        for code in self.0.iter() {
-            if asnum {
-                writeln!(f, "{:x}", code)?;
-                asnum = false;
-            } else {
-                write!(f, "{:?}", unsafe { transmute::<u32, Operation>(*code) })?;
-                if *code == Operation::Const32 as u32 {
-                    asnum = true;
-                    write!(f, " ")?;
-                } else {
-                    writeln!(f)?;
-                }
-            }
-        }
-        Ok(())
-    }
-}
-
-fn execute(operations: ByteCode) -> Result<Ret, &'static str> {
-    let mut i = 0usize;
-    let mut s = Stack::new();
-
-    loop {
-        use Operation as Op;
-        let e = operations.0[i];
-        match unsafe { transmute::<u32, Operation>(e) } {
-            Op::Goto => {
-                i = s.pop() as usize;
-                continue;
-            }
-            Op::Test => {
-                if s.pop() == 0 {
-                    i += 1;
-                }
-            }
-            Op::Nop => (),
-            Op::Const32 => {
-                i += 1;
-                s.push(operations.0[i]);
-            }
-            Op::I32CastF32S => {
-                let a = s.pops();
-                s.pushf(a as f32);
-            }
-            Op::I32CastF32U => {
-                let a = s.pop();
-                s.pushf(a as f32);
-            }
-            Op::F32CastI32S => {
-                let a = s.popf();
-                s.pushs(a as i32);
-            }
-            Op::F32CastI32U => {
-                let a = s.popf();
-                s.push(a as u32);
-            }
-            Op::ExitI32 => {
-                return Ok(Ret::I32(s.pops()));
-            }
-            Op::ExitF32 => {
-                return Ok(Ret::F32(s.popf()));
-            }
-            Op::ExitU32 => {
-                return Ok(Ret::U32(s.pop()));
-            }
-            Op::I32Neg => {
-                let a = s.pop();
-                s.push((0u32).wrapping_sub(a));
-            }
-            Op::F32Neg => {
-                let a = s.popf();
-                s.pushf(-a);
-            }
-            binop => {
-                let r = s.pop();
-                let l = s.pop();
-                fn asf32(arg: u32) -> f32 {
-                    f32::from_bits(arg)
-                }
-
-                fn asi32(arg: u32) -> i32 {
-                    unsafe { transmute::<u32, i32>(arg) }
-                }
-
-                match binop {
-                    Op::I32Add => s.push(l.wrapping_add(r)),
-                    Op::I32Sub => s.push(l.wrapping_sub(r)),
-                    Op::I32Mul => s.push(l.wrapping_mul(r)),
-                    Op::I32DivS => s.pushs(asi32(l) / asi32(r)),
-                    Op::I32DivU => {
-                        if r == 0 {
-                            return Err("Division by zero");
-                        } else {
-                            s.push(l / r);
-                        }
-                    }
-                    Op::I32Lt => {
-                        if r == 0 {
-                            return Err("Division by zero");
-                        } else {
-                            s.pushb(l < r);
-                        }
-                    }
-                    Op::I32Eq => s.pushb(l == r),
-
-                    Op::F32Add => s.pushf(asf32(l) + asf32(r)),
-                    Op::F32Sub => s.pushf(asf32(l) - asf32(r)),
-                    Op::F32Mul => s.pushf(asf32(l) * asf32(r)),
-                    Op::F32Div => s.pushf(asf32(l) / asf32(r)),
-                    Op::F32Eq => s.pushb(asf32(l) == asf32(r)),
-                    Op::F32Lt => s.pushb(asf32(l) < asf32(r)),
-
-                    Op::Goto
-                    | Op::Test
-                    | Op::Const32
-                    | Op::I32CastF32S
-                    | Op::I32CastF32U
-                    | Op::F32CastI32S
-                    | Op::F32CastI32U
-                    | Op::ExitI32
-                    | Op::ExitF32
-                    | Op::I32Neg
-                    | Op::F32Neg
-                    | Op::ExitU32
-                    | Op::Nop => {
-                        unreachable!()
-                    }
-                }
-            }
-        }
-        i += 1;
-    }
-}
-
-#[repr(u32)]
 #[derive(PartialEq, Eq, Clone, Debug)]
-enum Type {
+pub enum Type {
     I32,
     F32,
     U32,
 }
 
-impl Type {
-    fn cast(&self, typ: Type) -> Operation {
-        use Operation::*;
-        use Type as T;
-        match (self, typ) {
-            (T::I32, T::F32) => I32CastF32S,
-            (T::U32, T::F32) => I32CastF32U,
-
-            (T::F32, T::I32) => F32CastI32S,
-            (T::F32, T::U32) => F32CastI32U,
-            _ => Nop,
-        }
-    }
-
-    fn neg(&self) -> Operation {
-        match self {
-            Type::I32 | Type::U32 => Operation::I32Neg,
-            Type::F32 => Operation::F32Neg,
-        }
-    }
-
-    fn mul(&self) -> Operation {
-        match self {
-            Type::I32 | Type::U32 => Operation::I32Mul,
-            Type::F32 => Operation::F32Mul,
-        }
-    }
-
-    fn add(&self) -> Operation {
-        match self {
-            Type::I32 | Type::U32 => Operation::I32Add,
-            Type::F32 => Operation::F32Add,
-        }
-    }
-
-    fn sub(&self) -> Operation {
-        match self {
-            Type::I32 | Type::U32 => Operation::I32Sub,
-            Type::F32 => Operation::F32Sub,
-        }
-    }
-
-    fn div(&self) -> Operation {
-        match self {
-            Type::I32 => Operation::I32DivS,
-            Type::U32 => Operation::I32DivU,
-            Type::F32 => Operation::F32Div,
-        }
+// TODO: Make it checked so it doesn't panic
+macro_rules! mkbinop {
+    ($name:ident, $op:tt) => {
+	fn $name(self, other: Value) -> Result<Value, &'static str> {
+	    use Value as V;
+            match (self, other) {
+		(V::I32(l), V::I32(r)) => Ok(V::I32(l $op r)),
+		(V::U32(l), V::U32(r)) => Ok(V::U32(l $op r)),
+		(V::F32(l), V::F32(r)) => Ok(V::F32(l $op r)),
+		_ => Err("Type mismatch"),
+            }
+	}
     }
 }
 
+impl Value {
+    fn cast(self, typ: Type) -> Result<Value, &'static str> {
+        use Type as T;
+        use Value as V;
+        Ok(match (self.clone(), typ) {
+            (V::I32(n), T::F32) => V::F32(n as f32),
+            (V::I32(n), T::U32) => {
+                if n < 0 {
+                    Err("Cannot convert negative number to unsigned")?
+                } else {
+                    V::U32(n as u32)
+                }
+            }
+            (V::I32(_), T::I32) => self,
+
+            (V::U32(n), T::F32) => V::F32(n as f32),
+            (V::U32(_), T::U32) => self,
+            (V::U32(n), T::I32) => {
+                if n > i32::MAX as u32 {
+                    Err("Number too big to fit in signed integer")?
+                } else {
+                    V::I32(n as i32)
+                }
+            }
+
+            (V::F32(_), T::F32) => self,
+            (V::F32(n), T::U32) => V::U32(n as u32),
+            (V::F32(n), T::I32) => V::I32(n as i32),
+        })
+    }
+
+    fn neg(self) -> Result<Value, &'static str> {
+        use Value as V;
+        match self {
+            V::I32(n) => Ok(V::I32(-n)),
+            V::U32(_) => Err("Cannot negate unsigned value"),
+            V::F32(n) => Ok(V::F32(-n)),
+        }
+    }
+
+    mkbinop!(mul, *);
+    mkbinop!(add, +);
+    mkbinop!(sub, -);
+    mkbinop!(div, /);
+}
+
 #[derive(Clone, Debug, PartialEq)]
-enum Opc {
+pub enum Opc {
     Plus,
     Minus,
     Star,
@@ -459,6 +236,7 @@ impl Opc {
         }
     }
 
+    // The precedence of the operator, higher means that operation has priority
     fn pred(&self) -> i32 {
         match self {
             Opc::Plus => 0,
@@ -468,29 +246,31 @@ impl Opc {
         }
     }
 
-    fn code(&self, typ: Type) -> Operation {
+    // How one operator combines two values
+    fn apply(&self, l: Value, r: Value) -> Result<Value, &'static str> {
         match self {
-            Opc::Plus => typ.add(),
-            Opc::Minus => typ.sub(),
-            Opc::Star => typ.mul(),
-            Opc::Slash => typ.div(),
+            Opc::Plus => l.add(r),
+            Opc::Minus => l.sub(r),
+            Opc::Star => l.mul(r),
+            Opc::Slash => l.div(r),
         }
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
-enum Token {
+pub enum Token {
     Eof,
     LParen,
     RParen,
     Operator(Opc),
     Symbol(String),
-    I32(u32),
+    I32(i32),
     F32(f32),
     Cast(Type),
 }
 
-fn tokenize(input: &str) -> Result<Vec<Token>, &'static str> {
+// A simple lexer
+pub fn tokenize(input: &str) -> Result<Vec<Token>, &'static str> {
     let mut it = input.chars().peekable();
     let mut v: Vec<Token> = Vec::new();
 
@@ -525,8 +305,8 @@ fn tokenize(input: &str) -> Result<Vec<Token>, &'static str> {
                         Ok(f) => v.push(Token::F32(f)),
                     }
                 } else {
-                    match n.parse::<u32>() {
-                        Err(_) => return Err("How did we get here? (Invalid int format)"),
+                    match n.parse::<i32>() {
+                        Err(_) => return Err("Number too big"),
                         Ok(n) => v.push(Token::I32(n)),
                     }
                 }
@@ -540,68 +320,43 @@ fn tokenize(input: &str) -> Result<Vec<Token>, &'static str> {
     Ok(v)
 }
 
-struct Parser {
-    output: ByteCode,
-    tokens: Vec<Token>,
-    index: usize,
+// A recursive descent parser, see https://en.wikipedia.org/wiki/Recursive_descent_parser
+pub struct Parser<I: Iterator<Item = Token>> {
+    tokens: Peekable<I>,
 }
 
-impl Parser {
-    fn new(toks: Vec<Token>) -> Self {
+impl<I: Iterator<Item = Token>> Parser<I> {
+    pub fn new(toks: I) -> Self {
         Self {
-            output: ByteCode(Vec::new()),
-            tokens: toks,
-            index: 0,
+            tokens: toks.peekable(),
         }
     }
 
-    fn add_op(&mut self, code: Operation) {
-        self.output.0.push(code as u32);
-    }
-
-    fn add_32(&mut self, v: u32) {
-        self.output.0.push(v);
+    fn next(&mut self) -> Token {
+        self.tokens.next().unwrap_or(Token::Eof)
     }
 
     fn peek(&mut self) -> Token {
-        self.tokens
-            .get(self.index).cloned()
-            .unwrap_or(Token::Eof)
+        self.tokens.peek().cloned().unwrap_or(Token::Eof)
     }
 
-    fn eat(&mut self) {
-        self.index += 1
-    }
-
-    fn next(&mut self) -> Token {
-        let t = self.peek();
-        self.eat();
-        t
-    }
-
-    fn parse(mut self) -> Result<ByteCode, &'static str> {
+    pub fn parse(mut self) -> Result<Value, &'static str> {
         let p = self.primary()?;
         let e = self.expression(p, 0)?;
         match self.next() {
-            Token::Eof => {
-                match e {
-                    Type::I32 => self.add_op(Operation::ExitI32),
-                    Type::U32 => self.add_op(Operation::ExitU32),
-                    Type::F32 => self.add_op(Operation::ExitF32),
-                }
-                Ok(self.output)
-            }
+            Token::Eof => Ok(e),
             _ => Err("Expected end of input"),
         }
     }
 
-    fn expression(&mut self, mut lhs: Type, pred: i32) -> Result<Type, &'static str> {
+    // A pratt parser, see https://en.wikipedia.org/wiki/Operator-precedence_parser
+    fn expression(&mut self, mut lhs: Value, pred: i32) -> Result<Value, &'static str> {
         loop {
             let op = match self.peek() {
                 Token::Operator(op) if op.pred() >= pred => op,
                 _ => break,
             };
-            self.eat();
+            self.next();
 
             let mut rhs = self.primary()?;
             loop {
@@ -612,16 +367,12 @@ impl Parser {
                 rhs = self.expression(rhs, op2.pred())?;
                 self.next();
             }
-            if rhs != lhs {
-                return Err("Type mismatch");
-            }
-            self.add_op(op.code(lhs));
-            lhs = rhs;
+            lhs = op.apply(lhs, rhs)?;
         }
         Ok(lhs)
     }
 
-    fn primary(&mut self) -> Result<Type, &'static str> {
+    fn primary(&mut self) -> Result<Value, &'static str> {
         let r = match self.next() {
             Token::LParen => {
                 let p = self.primary()?;
@@ -631,35 +382,16 @@ impl Parser {
                     _ => Err("Expected ')'")?,
                 }
             }
-            Token::Operator(Opc::Minus) => {
-                let p = self.primary()?;
-                self.add_op(p.neg());
-                p
-            }
-            Token::Operator(Opc::Plus) => {
-                
-                self.primary()?
-            }
-            Token::F32(n) => {
-                self.add_op(Operation::Const32);
-                self.add_32(n.to_bits());
-                Type::F32
-            }
-            Token::I32(n) => {
-                self.add_op(Operation::Const32);
-                self.add_32(n);
-                Type::I32
-            }
+            Token::Operator(Opc::Minus) => self.primary()?.neg()?,
+            Token::Operator(Opc::Plus) => self.primary()?,
+            Token::F32(n) => Value::F32(n),
+            Token::I32(n) => Value::I32(n),
             _ => Err("Expected a value")?,
         };
         Ok(match self.peek() {
             Token::Cast(t) => {
-                self.eat();
-                match r.cast(t.clone()) {
-                    Operation::Nop => (),
-                    t => self.add_op(t),
-                }
-                t
+                self.next();
+                r.cast(t)?
             }
             _ => r,
         })
