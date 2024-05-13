@@ -1,0 +1,14 @@
+[package]
+name = "bismarck_core"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+poise = { workspace = true }
+serenity = { workspace = true }
+sqlx = { workspace = true }
+dashmap = { workspace = true }
+reqwest = { workspace = true }
+serde = { workspace = true }

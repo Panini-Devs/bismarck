@@ -5,7 +5,7 @@ mod wish_tests {
     use super::*;
 
     const ROLLS: u32 = 1_000_000;
-    const EPS: f64 = 1./300.;
+    const EPS: f64 = 1. / 300.;
 
     fn test_tol(result: f64, expected: f64) {
         let res = result / ROLLS as f64;
@@ -60,8 +60,8 @@ mod wish_tests {
             let roll;
             (roll, state) = wish.roll(state, &mut rng);
             match roll.kind {
-                RollKind::FiveStar => s5 = s5 + 1.,
-                RollKind::FourStar => s4 = s4 + 1.,
+                RollKind::FiveStar => s5 += 1.,
+                RollKind::FourStar => s4 += 1.,
                 _ => (),
             }
         }
@@ -95,10 +95,10 @@ mod wish_tests {
             let roll;
             (roll, state) = wish.roll(state, &mut rng);
             match roll.kind {
-                RollKind::FiveStar => s5 = s5 + 1.,
-                RollKind::FiveStarFeatured => s5 = s5 + 1.,
-                RollKind::FourStar => s4 = s4 + 1.,
-                RollKind::FourStarFeatured => s4 = s4 + 1.,
+                RollKind::FiveStar => s5 += 1.,
+                RollKind::FiveStarFeatured => s5 += 1.,
+                RollKind::FourStar => s4 += 1.,
+                RollKind::FourStarFeatured => s4 += 1.,
                 _ => (),
             }
         }

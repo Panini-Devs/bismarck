@@ -1,14 +1,7 @@
 use std::time::Duration;
 
-use crate::{
-    utilities::{
-        self,
-        embeds::warnings_command_embed,
-        messages, models,
-        modlog::{self, ensure_user, ModType},
-    },
-    Context, Error,
-};
+use bismarck_core::{context::Context, error::Error};
+use bismarck_utilities::{embeds::warnings_command_embed, messages, models, modlog::*, paginate};
 
 use chrono::{Days, NaiveDateTime, Utc};
 use duration_str::parse;
@@ -88,7 +81,7 @@ pub async fn ban(
 
         let created_at = Utc::now().naive_utc();
 
-        let mut user_mod_history = modlog::select_modlog_from_users(&user_id, database).await?;
+        let mut user_mod_history = select_modlog_from_users(&user_id, database).await?;
 
         let message = messages::info_message(format!(
             "You've been banned from {guild_name} by {moderator_mention} for {reason}.",
@@ -101,7 +94,7 @@ pub async fn ban(
 
         match guild_id.ban_with_reason(context, user_id, 0, &reason).await {
             Ok(_) => {
-                modlog::insert_modlog(
+                insert_modlog(
                     ModType::Ban,
                     &guild_id,
                     &user_id,
@@ -114,7 +107,7 @@ pub async fn ban(
 
                 user_mod_history += 1;
 
-                modlog::update_users_set_modlog(&user_id, user_mod_history, database).await?;
+                update_users_set_modlog(&user_id, user_mod_history, database).await?;
 
                 info!("@{moderator_name} banned @{user_name} from {guild_name}: {reason}");
                 Ok(format!("{user_mention} has been banned."))
@@ -209,7 +202,7 @@ pub async fn kick(
 
         let created_at = Utc::now().naive_utc();
 
-        let mut user_mod_history = modlog::select_modlog_from_users(&user_id, database).await?;
+        let mut user_mod_history = select_modlog_from_users(&user_id, database).await?;
 
         let message = messages::info_message(format!(
             "You've been kicked from {guild_name} by {moderator_mention} for {reason}.",
@@ -222,7 +215,7 @@ pub async fn kick(
 
         match guild_id.kick_with_reason(context, user_id, &reason).await {
             Ok(_) => {
-                modlog::insert_modlog(
+                insert_modlog(
                     ModType::Kick,
                     &guild_id,
                     &user_id,
@@ -235,7 +228,7 @@ pub async fn kick(
 
                 user_mod_history += 1;
 
-                modlog::update_users_set_modlog(&user_id, user_mod_history, database).await?;
+                update_users_set_modlog(&user_id, user_mod_history, database).await?;
 
                 info!("@{moderator_name} kicked @{user_name} from {guild_name}: {reason}");
                 Ok(format!("{user_mention} has been kicked."))
@@ -330,11 +323,11 @@ pub async fn unban(
 
         let created_at = Utc::now().naive_utc();
 
-        let mut user_mod_history = modlog::select_modlog_from_users(&user_id, database).await?;
+        let mut user_mod_history = select_modlog_from_users(&user_id, database).await?;
 
         match guild_id.unban(context, user_id).await {
             Ok(_) => {
-                modlog::insert_modlog(
+                insert_modlog(
                     ModType::Unban,
                     &guild_id,
                     &user_id,
@@ -347,7 +340,7 @@ pub async fn unban(
 
                 user_mod_history += 1;
 
-                modlog::update_users_set_modlog(&user_id, user_mod_history, database).await?;
+                update_users_set_modlog(&user_id, user_mod_history, database).await?;
 
                 info!("@{moderator_name} unbanned @{user_name} from {guild_name}: {reason}");
                 Ok(format!("{user_mention} has been unbanned."))
@@ -468,14 +461,14 @@ pub async fn timeout(
 
         let created_at = Utc::now().naive_utc();
 
-        let mut user_mod_history = modlog::select_modlog_from_users(&user_id, database).await?;
+        let mut user_mod_history = select_modlog_from_users(&user_id, database).await?;
 
         match member
             .disable_communication_until_datetime(context, time)
             .await
         {
             Ok(_) => {
-                modlog::insert_modlog(
+                insert_modlog(
                     ModType::Timeout,
                     &guild_id,
                     &user_id,
@@ -488,7 +481,7 @@ pub async fn timeout(
 
                 user_mod_history += 1;
 
-                modlog::update_users_set_modlog(&user_id, user_mod_history, database).await?;
+                update_users_set_modlog(&user_id, user_mod_history, database).await?;
 
                 info!("@{moderator_name} timed out @{user_name} from {guild_name}: {reason}");
                 Ok(format!("{user_mention} has been timed out."))
@@ -562,11 +555,11 @@ pub async fn untimeout(
 
         let created_at = Utc::now().naive_utc();
 
-        let mut user_mod_history = modlog::select_modlog_from_users(&user_id, database).await?;
+        let mut user_mod_history = select_modlog_from_users(&user_id, database).await?;
 
         match member.enable_communication(context).await {
             Ok(_) => {
-                modlog::insert_modlog(
+                insert_modlog(
                     ModType::Untimeout,
                     &guild_id,
                     &user_id,
@@ -579,7 +572,7 @@ pub async fn untimeout(
 
                 user_mod_history += 1;
 
-                modlog::update_users_set_modlog(&user_id, user_mod_history, database).await?;
+                update_users_set_modlog(&user_id, user_mod_history, database).await?;
 
                 info!("@{moderator_id} untimed out @{user_name} from {guild_name}");
                 Ok(format!("{user_mention} has been untimed out."))
@@ -652,9 +645,9 @@ pub async fn warn(
 
         let created_at = Utc::now().naive_utc();
 
-        let mut user_mod_history = modlog::select_modlog_from_users(&user_id, database).await?;
+        let mut user_mod_history = select_modlog_from_users(&user_id, database).await?;
 
-        match modlog::insert_modlog(
+        match insert_modlog(
             ModType::Warn,
             &guild_id,
             &user_id,
@@ -668,7 +661,7 @@ pub async fn warn(
             Ok(_) => {
                 user_mod_history += 1;
 
-                modlog::update_users_set_modlog(&user_id, user_mod_history, database).await?;
+                update_users_set_modlog(&user_id, user_mod_history, database).await?;
 
                 info!("@{moderator_id} warned @{user_name} from {guild_name}");
                 Ok(format!("{user_mention} has been warned."))
@@ -733,7 +726,7 @@ pub async fn warnings(
         let guild_id = context.guild_id().unwrap();
 
         let user_mod_history =
-            match modlog::select_modlog(ModType::Warn, &user_id, &guild_id, database).await {
+            match select_modlog(ModType::Warn, &user_id, &guild_id, database).await {
                 Ok(user_mod_history) => user_mod_history,
                 Err(why) => {
                     error!("Couldn't select warnings from infractions: {why:?}");
@@ -789,7 +782,7 @@ pub async fn warnings(
                 ));
             });
 
-        match utilities::paginate::paginate(context, embeds).await {
+        match paginate::paginate(context, embeds).await {
             Ok(_) => {
                 let author = context.author().id;
                 info!("@{author} requested @{user_name}'s warnings");

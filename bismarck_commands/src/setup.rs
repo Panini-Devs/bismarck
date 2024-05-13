@@ -1,4 +1,4 @@
-use crate::{utilities::types::GuildSettings, Context, Error};
+use bismarck_core::{context::Context, error::Error, types::GuildSettings};
 use poise::{serenity_prelude as serenity, CreateReply};
 use serenity::{CreateEmbed, CreateEmbedFooter};
 use tracing::info;
