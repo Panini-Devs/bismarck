@@ -1,7 +1,7 @@
 p{
     font-family: "Roboto", sans-serif;
 }
-h2, h1 {
+h2, h1, h3 {
     font-family: "Open sans", sans-serif;
 }
 .hdr {
@@ -118,4 +118,41 @@ body {
     .hdr h2 {
         padding-right: 200px;
     }
+}
+.gsbtn {
+    background-color: green;
+    color: white;
+    height: 50px;
+    width: 100px;
+    box-shadow: 4px 4px 20px 4px grey;
+    cursor: pointer;
+}
+.gsbtn:hover {
+    background-color: rgb(5, 72, 5);
+}   
+
+
+body, html {
+    height: 100%;
+    margin: 0;
+}
+.footer {
+    right: 0;
+    left: 0;
+    background-color: black;
+    margin-bottom: -200px;
+    color: white;
+    height: 100px;
+    display: flex;
+    flex-direction: column;
+    margin-top: 20px;
+    align-items: center;
+}
+.footer a {
+    color: white;
+    text-decoration: none;
+    padding-right: 50px;
+}
+.footer nav{
+    padding-left: 40px;
 }
