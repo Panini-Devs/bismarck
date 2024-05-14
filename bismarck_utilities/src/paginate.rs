@@ -1,7 +1,7 @@
 use poise::serenity_prelude as serenity;
 use uuid::Uuid;
 
-use crate::Context;
+use bismarck_core::context::Context;
 
 /// Paginates a list of embeds using UUID as custom ID to identify the buttons.
 pub async fn paginate(

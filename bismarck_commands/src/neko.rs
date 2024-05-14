@@ -1,7 +1,7 @@
 use poise::CreateReply;
 use serenity::all::{CreateEmbed, CreateEmbedFooter};
 
-use crate::{utilities::types::Items, Context, Error};
+use bismarck_core::{context::Context, error::Error, types::Items};
 
 /// Sends a random Neko image.
 #[poise::command(

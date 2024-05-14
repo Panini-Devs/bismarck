@@ -1,5 +1,7 @@
 use serde::Deserialize;
 
+// Guild settings type below
+
 #[derive(Debug, Clone)]
 pub struct GuildSettings {
     pub prefix: String,
@@ -9,11 +11,15 @@ pub struct GuildSettings {
     pub default_mute_duration: u64,
 }
 
+// Guild stat type below
+
 #[derive(Debug, Clone)]
 pub struct GuildStats {
     pub commands_ran: u64,
     pub songs_played: u64,
 }
+
+// Wish type below
 
 #[derive(Debug, Clone)]
 pub struct User {
@@ -26,6 +32,8 @@ pub struct User {
     pub character_pity: u64,
 }
 
+// Neko API needed deseralization types below
+
 #[derive(Deserialize, Clone)]
 pub struct Item {
     pub image_url: String,
@@ -36,6 +44,8 @@ pub struct Item {
 pub struct Items {
     pub items: Vec<Item>,
 }
+
+// Wikipedia API needed deserialization types below
 
 #[derive(Deserialize)]
 pub struct WikiQuery(

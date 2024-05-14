@@ -3,9 +3,33 @@ name = "bismarck"
 version = "0.0.1"
 edition = "2021"
 
+[workspace]
+members = [
+    "bismarck_commands",
+    "bismarck_core",
+    "bismarck_events",
+    "bismarck_utilities"
+]
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+dotenv = { workspace = true }
+poise = { workspace = true }
+serenity = { workspace = true }
+sqlx = { workspace = true }
+dashmap = { workspace = true }
+reqwest = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+bismarck_commands = { path = "bismarck_commands" }
+bismarck_core = { path = "bismarck_core" }
+bismarck_events = { path = "bismarck_events" }
+bismarck_utilities = { path = "bismarck_utilities" }
+
+[workspace.dependencies]
 poise = { git = "https://github.com/serenity-rs/poise/", branch = "current", features = ["cache"] }
 serenity = { version = "^0.12.1", default-features = false, features = ["rustls_backend", "chrono", "gateway"] }
 serde = "^1.0.197"
@@ -32,7 +56,8 @@ reqwest = { version = "0.12.0", features = ["json"] }
 lazy_static = "1.4.0"
 dashmap = "^5.5.3"
 uuid = { version = "1.7.0", features = ["v4"] }
-duration-str = "0.9.1"
+duration-str = "0.10.0"
+
 
 rand = "0.8"
 
@@ -41,4 +66,4 @@ rand = "0.8"
 opt-level = 3
 
 [build]
-rustflags = ["-Z", "threads=8", "target-cpu=native"]
+rustflags = ["-Z", "threads=8", "-C", "target-cpu=native"]

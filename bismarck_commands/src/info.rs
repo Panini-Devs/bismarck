@@ -1,7 +1,7 @@
 use std::sync::atomic::Ordering;
 
-use crate::utilities::git::{get_current_branch, get_head_revision};
-use crate::{Context, Error};
+use bismarck_core::{context::Context, error::Error};
+use bismarck_utilities::git::{get_current_branch, get_head_revision};
 use git2::Repository;
 use poise::{serenity_prelude as serenity, CreateReply};
 
