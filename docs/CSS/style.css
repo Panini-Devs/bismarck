@@ -1,0 +1,158 @@
+p{
+    font-family: "Roboto", sans-serif;
+}
+h2, h1, h3 {
+    font-family: "Open sans", sans-serif;
+}
+.hdr {
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    justify-content: space-between;
+    position: fixed;
+    background-color: #f8f8f8;
+    
+    width: 100%;
+    top: 0;
+    right: 0;
+    left: 0;
+    border-bottom: 1.7px solid gray;
+}
+.hdr h2 {
+    padding-left: 50px;
+}
+.hdr nav {
+    padding-left: 600px;
+}
+body {
+    background-color: #f8f8f8;
+    color: black;
+}
+.hdr a {
+    color: black;
+    text-decoration: none;
+    font-family: "Roboto", sans-serif;
+    padding-right: 15px;
+}
+.main {
+    margin-top: 200px;
+}
+
+.gradient-underline {
+    background-image: linear-gradient(to right, lime, lightblue, blue);
+    background-size: 100% 2px; 
+    background-repeat: no-repeat;
+    background-position: bottom;    
+}
+
+.grid-of-4 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+.grid-of-4 i {
+    font-size: 130px;
+    padding-top: 30px;
+}
+.feature {
+    border-radius: 10px;
+}
+.feature img {
+    padding-top: 20px;
+}
+
+.dropbtn {
+    background-color: #f8f8f8;
+    color: black;
+    padding: 16px;
+    font-size: 16px;
+    border: none;
+    display: none;
+}
+  
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+  
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f1f1f1;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+}
+  
+.dropdown-content a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+}
+  
+.dropdown-content a:hover {
+    background-color: #ddd;
+}
+  
+.dropdown:hover .dropdown-content {
+    display: block;
+    padding-right: 20px;
+}
+  
+.dropdown:hover .dropbtn {
+    background-color: lightgrey;
+} 
+
+@media screen and (max-width: 850px) {
+    .grid-of-4 {
+        display: flex;
+        flex-direction: column;
+    }
+    .hdr nav {
+        display: none;
+    }
+    .dropbtn {
+        display: block;
+    }
+    .hdr h2 {
+        padding-right: 200px;
+    }
+}
+.gsbtn {
+    background-color: green;
+    color: white;
+    height: 50px;
+    width: 100px;
+    box-shadow: 4px 4px 20px 4px grey;
+    cursor: pointer;
+}
+.gsbtn:hover {
+    background-color: rgb(5, 72, 5);
+}   
+
+
+body, html {
+    height: 100%;
+    margin: 0;
+}
+.footer {
+    right: 0;
+    left: 0;
+    background-color: black;
+    margin-bottom: -200px;
+    color: white;
+    height: 100px;
+    display: flex;
+    flex-direction: column;
+    margin-top: 20px;
+    align-items: center;
+}
+.footer a {
+    color: white;
+    text-decoration: none;
+    padding-right: 50px;
+}
+.footer nav{
+    padding-left: 40px;
+}

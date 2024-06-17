@@ -38,7 +38,7 @@ tracing = "^0.1.40"
 tracing-subscriber = "^0.3"
 dotenv = "^0.15.0"
 chrono = "^0.4.34"
-git2 = "^0.18.2"
+git2 = "^0.19.0"
 tokio = { version = "^1.36.0", features = ["macros", "signal", "rt-multi-thread"] }
 rustrict = "^0.7.21"
 sqlx = { version = "^0.7.3", "features" = [
@@ -56,7 +56,7 @@ reqwest = { version = "0.12.0", features = ["json"] }
 lazy_static = "1.4.0"
 dashmap = "^5.5.3"
 uuid = { version = "1.7.0", features = ["v4"] }
-duration-str = "0.10.0"
+duration-str = "0.11.0"
 
 
 rand = "0.8"
