@@ -31,16 +31,16 @@ pub async fn get_prefix(context: PartialContext<'_>) -> Result<Option<String>, E
 
                 // create new guild settings into sqlite database as a failsafe
                 // in case guild_join did not load properly
-                let query_result: Result<SqliteQueryResult, sqlx::Error> = sqlx::query!(
+                let query_result: Result<SqliteQueryResult, sqlx::Error> = sqlx::query(
                     "INSERT INTO guild (
                         id,
                         prefix,
                         owner
                     ) VALUES (?, ?, ?)",
-                    guild_id,
-                    "+",
-                    owner_id
                 )
+                .bind(guild_id)
+                .bind("+")
+                .bind(owner_id)
                 .execute(database)
                 .await;
 
@@ -78,48 +78,47 @@ pub async fn pre_command(context: Context<'_>) {
         context.command().name
     );
 
+    let data = context.data();
+
     let start_time = Instant::now();
 
     if let Some(guild_id) = context.guild_id() {
-        let commands_ran = context.data().commands_ran.get(&guild_id.get()).unwrap();
+        let commands_ran = data.commands_ran.get(&guild_id.get()).unwrap();
         commands_ran.fetch_add(1, Ordering::Relaxed);
 
         let id = guild_id.get() as i64;
 
-        if let Err(query) = sqlx::query!(
-            "UPDATE guild SET commands_ran = commands_ran + 1 WHERE id = ?",
-            id
-        )
-        .execute(&context.data().sqlite)
-        .await
+        if let Err(query) =
+            sqlx::query("UPDATE guild SET commands_ran = commands_ran + 1 WHERE id = ?")
+                .bind(id)
+                .execute(&context.data().sqlite)
+                .await
         {
             error!("Failed to update guild commands ran: {}", query);
         }
     }
 
-    let commands_ran_global = context.data().commands_ran.get(&0).unwrap();
+    let commands_ran_global = data.commands_ran.get(&0).unwrap();
     commands_ran_global.fetch_add(1, Ordering::Relaxed);
 
-    if let Err(query) =
-        sqlx::query!("UPDATE guild SET commands_ran = commands_ran + 1 WHERE id = 0")
-            .execute(&context.data().sqlite)
-            .await
+    if let Err(query) = sqlx::query("UPDATE guild SET commands_ran = commands_ran + 1 WHERE id = 0")
+        .execute(&context.data().sqlite)
+        .await
     {
         error!("Failed to update global commands ran: {}", query);
     }
 
     let author_id = u64::from(context.author().id);
-    if let Some(commands_ran_user) = context.data().commands_ran_users.get(&author_id) {
+    if let Some(commands_ran_user) = data.commands_ran_users.get(&author_id) {
         commands_ran_user.fetch_add(1, Ordering::Relaxed);
 
         let author_id = i64::from(context.author().id);
 
-        if let Err(query) = sqlx::query!(
-            "UPDATE user SET commands_run = commands_run + 1 WHERE id = ?",
-            author_id
-        )
-        .execute(&context.data().sqlite)
-        .await
+        if let Err(query) =
+            sqlx::query("UPDATE user SET commands_run = commands_run + 1 WHERE id = ?")
+                .bind(author_id)
+                .execute(&context.data().sqlite)
+                .await
         {
             error!("Failed to update user commands ran: {}", query);
         }
@@ -127,18 +126,15 @@ pub async fn pre_command(context: Context<'_>) {
         return;
     }
 
-    context
-        .data()
-        .commands_ran_users
-        .insert(author_id, AtomicU64::new(1));
+    data.commands_ran_users.insert(author_id, AtomicU64::new(1));
 
     let author_id = i64::from(context.author().id);
-    if let Err(query) = sqlx::query!(
+    if let Err(query) = sqlx::query(
         "INSERT OR IGNORE INTO user (
             id
         ) VALUES (?)",
-        author_id
     )
+    .bind(author_id)
     .execute(&context.data().sqlite)
     .await
     {

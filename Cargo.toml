@@ -4,7 +4,7 @@ version = "0.0.1"
 edition = "2021"
 
 [workspace]
-members = [
+members = [ "akikaze",
     "bismarck_commands",
     "bismarck_core",
     "bismarck_events",
@@ -31,7 +31,7 @@ bismarck_utilities = { path = "bismarck_utilities" }
 
 [workspace.dependencies]
 poise = { git = "https://github.com/serenity-rs/poise/", branch = "current", features = ["cache"] }
-serenity = { version = "^0.12.1", default-features = false, features = ["rustls_backend", "chrono", "gateway"] }
+serenity = { version = "^0.12.2", default-features = false, features = ["rustls_backend", "chrono", "gateway"] }
 serde = "^1.0.197"
 serde_json = "^1.0.114"
 tracing = "^0.1.40"
@@ -41,7 +41,7 @@ chrono = "^0.4.34"
 git2 = "^0.19.0"
 tokio = { version = "^1.36.0", features = ["macros", "signal", "rt-multi-thread"] }
 rustrict = "^0.7.21"
-sqlx = { version = "^0.7.3", "features" = [
+sqlx = { version = "^0.7.4", "features" = [
     "macros",
     "migrate",
     "chrono",

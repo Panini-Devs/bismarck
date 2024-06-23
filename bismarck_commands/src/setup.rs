@@ -98,15 +98,13 @@ pub async fn set(
             let database = &data.sqlite;
             let guild_id = id as i64;
 
-            let info = sqlx::query!(
-                "UPDATE guild SET prefix = ? WHERE id = ?",
-                new_prefix,
-                guild_id
-            )
-            .execute(database)
-            .await
-            .unwrap()
-            .rows_affected();
+            let info = sqlx::query("UPDATE guild SET prefix = ? WHERE id = ?")
+                .bind(&new_prefix)
+                .bind(guild_id)
+                .execute(database)
+                .await
+                .unwrap()
+                .rows_affected();
 
             info!("Prefix set to {new_prefix} for guild {guild_id}, {info} rows affected");
         }
