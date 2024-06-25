@@ -9,4 +9,4 @@ tracing = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true }
-futures_util = { workspace = true }
+futures = { workspace = true }

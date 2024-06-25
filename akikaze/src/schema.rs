@@ -15,15 +15,20 @@ pub struct Phase {
 #[derive(Debug, Deserialize)]
 pub struct BannerContainer {
     pub standardVersion: u8,
-    pub events: Vec<CharBanner>,
+    pub events: Banner,
     pub weapons: WeaponBanner,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Banner {
+    pub featured: CharBanner,
+    pub rateup: Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct CharBanner {
     pub bannerName: String,
-    pub character: Banner,
-    pub rateup: Vec<String>,
+    pub name: String,
 }
 
 #[derive(Debug, Deserialize)]

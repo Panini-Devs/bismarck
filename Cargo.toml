@@ -24,6 +24,7 @@ tokio = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 
+akikaze = { path = "akikaze" }
 bismarck_commands = { path = "bismarck_commands" }
 bismarck_core = { path = "bismarck_core" }
 bismarck_events = { path = "bismarck_events" }
@@ -57,7 +58,7 @@ lazy_static = "1.4.0"
 dashmap = { git = "https://github.com/xacrimon/dashmap", branch = "master" }
 uuid = { version = "1.7.0", features = ["v4"] }
 duration-str = "0.11.0"
-
+futures = "^0.3.30"
 
 rand = "0.8"
 
