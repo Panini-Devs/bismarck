@@ -33,8 +33,8 @@ bismarck_utilities = { path = "bismarck_utilities" }
 [workspace.dependencies]
 poise = { git = "https://github.com/serenity-rs/poise/", branch = "current", features = ["cache"] }
 serenity = { version = "^0.12.2", default-features = false, features = ["rustls_backend", "chrono", "gateway"] }
-serde = "^1.0.197"
-serde_json = "^1.0.114"
+serde = "^1.0.203"
+serde_json = "^1.0.120"
 tracing = "^0.1.40"
 tracing-subscriber = "^0.3"
 dotenv = "^0.15.0"
@@ -52,15 +52,15 @@ sqlx = { version = "^0.7.4", "features" = [
     "sqlx-sqlite",
 ] }
 
-sysinfo = "0.30.7"
-reqwest = { version = "0.12.0", features = ["json"] }
-lazy_static = "1.4.0"
+sysinfo = "^0.30.7"
+reqwest = { version = "0.12.5", features = ["json"] }
+lazy_static = "^1.4.0"
 dashmap = { git = "https://github.com/xacrimon/dashmap", branch = "master" }
-uuid = { version = "1.7.0", features = ["v4"] }
-duration-str = "0.11.0"
+uuid = { version = "1.9.1", features = ["v4"] }
+duration-str = "0.11.2"
 futures = "^0.3.30"
 
-rand = "0.8"
+rand = "^0.8"
 
 
 [profile.release]
