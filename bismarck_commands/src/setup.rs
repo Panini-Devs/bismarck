@@ -88,7 +88,7 @@ pub async fn set(
             };
 
             let mut guild_setting = pf.entry(id).or_insert(setting);
-            guild_setting.prefix = prefix.clone();
+            guild_setting.prefix.clone_from(&prefix);
 
             prefix
         };

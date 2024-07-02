@@ -1,7 +1,7 @@
 use std::sync::atomic::Ordering;
 
 use bismarck_core::{context::Context, error::Error};
-use bismarck_utilities::git::{get_current_branch, get_head_revision};
+use bismarck_utilities::git::{get_current_branch, get_head_revision, get_absolute_path};
 use git2::Repository;
 use poise::{serenity_prelude as serenity, CreateReply};
 
@@ -16,7 +16,7 @@ use serenity::{CreateEmbed, CreateEmbedAuthor, CreateEmbedFooter, PremiumType};
     category = "Info"
 )]
 pub async fn about(context: Context<'_>) -> Result<(), Error> {
-    let repo = Repository::open(env!("CARGO_MANIFEST_DIR"))?;
+    let repo = Repository::open(get_absolute_path())?;
 
     let version = env!("CARGO_PKG_VERSION").to_string();
     let codename = "Graf Zeppelin".to_string();

@@ -20,3 +20,10 @@ pub fn get_head_revision(repo: &Repository) -> String {
     let revision = revspec.from().unwrap();
     revision.short_id().unwrap().as_str().unwrap().to_string()
 }
+
+/// Retrieves the absolute path for a variable
+pub fn get_absolute_path() -> String {
+    let dir = std::path::PathBuf::from("./");
+
+    std::fs::canonicalize(dir).unwrap().to_str().unwrap().to_string()
+}
