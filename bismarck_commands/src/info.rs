@@ -69,10 +69,11 @@ pub async fn about(context: Context<'_>) -> Result<(), Error> {
 
 /// Returns the account age of the selected user.
 #[poise::command(
+    rename = "userinfo",
     slash_command,
     prefix_command,
     required_bot_permissions = "SEND_MESSAGES",
-    aliases("userinfo", "ui"),
+    aliases("ui"),
     category = "Info"
 )]
 pub async fn user_info(
@@ -119,10 +120,12 @@ pub async fn user_info(
 
 /// Shows the user's avatars.
 #[poise::command(
+    rename = "avatar",
     prefix_command,
     slash_command,
     category = "Info",
-    required_bot_permissions = "SEND_MESSAGES"
+    required_bot_permissions = "SEND_MESSAGES",
+    aliases("av"),
 )]
 pub async fn user_avatars(
     context: Context<'_>,
@@ -171,10 +174,12 @@ pub async fn user_avatars(
 
 /// Returns the bot's stats.
 #[poise::command(
+    rename = "botstat",
     slash_command,
     prefix_command,
     category = "Info",
-    required_bot_permissions = "SEND_MESSAGES"
+    required_bot_permissions = "SEND_MESSAGES",
+    aliases("bs", "stats"),
 )]
 pub async fn bot_stat(context: Context<'_>) -> Result<(), Error> {
     let guild = context.guild().unwrap().id;
