@@ -1,6 +1,6 @@
+use std::path::PathBuf;
 use std::fs::{DirEntry, read_dir, File};
 use std::io::BufReader;
-use std::env;
 
 use futures::stream::FuturesUnordered;
 use tokio::task;
@@ -9,23 +9,18 @@ use tracing::debug;
 use crate::schema::BannerData;
 
 pub async fn scrape() {
-    let path = env::var("AKIKAZE_RES").expect(
-        "PATH not set. Set it with the `AKIKAZE_RES` environment variable.",
-    );
+    let path = PathBuf::from("./akikaze/banners/events");
 
     let dir = read_dir(path).unwrap();
 
-    let futures = FuturesUnordered::new();
-
-    let _ = dir.map(|entry| {
-        let future = task::spawn(async move {
+    let futures: FuturesUnordered<_> = dir.map(|entry| {
+        task::spawn(async move {
             get_banner_data(entry).await
         });
-
-        futures.push(future);
-    });
+    }).collect();
 
     // TODO: Get results from futures
+    
 }
 
 async fn get_banner_data(entry: Result<DirEntry, std::io::Error>) -> BannerData {
