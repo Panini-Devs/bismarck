@@ -42,7 +42,7 @@ chrono = "^0.4.34"
 git2 = "^0.19.0"
 tokio = { version = "^1.36.0", features = ["macros", "signal", "rt-multi-thread"] }
 rustrict = "^0.7.21"
-sqlx = { version = "^0.7.4", "features" = [
+sqlx = { version = "^0.8.0", "features" = [
     "macros",
     "migrate",
     "chrono",
