@@ -1,6 +1,6 @@
 
 /// Struct describing a mathematical operator that takes two operands
-struct BinaryOperator {
+struct BinaryOperator<'a> {
     /// The precedence of an determines where it is located in the priority chain.
     ///
     /// Multiplication has higher precedence than addition,
@@ -13,7 +13,7 @@ struct BinaryOperator {
     /// The identifier of the operator, not limited to just one character.
     /// A symbol can be defined as an operator, such that `5 and 1` would evaluate to `1`
     /// (boolean addition)
-    identifier: &'static str,
+    identifier: &'a str,
 
     /// Operator application method
     ///
