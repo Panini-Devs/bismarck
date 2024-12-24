@@ -29,3 +29,21 @@ trait BinaryOperator {
     /// for example in cases where division by zero happens.
     fn apply(&self, left_operand: f64, right_operand: f64) -> Result<f64, &'static str>;
 }
+
+/// Trait describing a mathematical operator that takes one operand
+trait UnaryOperator {
+    /// Identifier of the operator 
+    const IDENTIFIER: char;
+
+    /// Operator application method
+    ///
+    /// # Arguments
+    ///
+    /// * `operand` - Number to apply the operator to
+    ///
+    /// # Returns
+    ///
+    /// Result of applying the operator to the operand.
+    /// One common error to signal is overflow, for example, caused by `50!`.
+    fn apply(&self, operand: f64) -> Resutl<f64, &'static str>;
+}
