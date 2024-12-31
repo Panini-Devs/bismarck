@@ -6,6 +6,7 @@ use bismarck_core::{
     error::Error,
     types::{QueryContainer, WikiQuery},
 };
+use tracing::debug;
 
 /// Shows Wikipedia search results.
 #[poise::command(
@@ -32,6 +33,8 @@ pub async fn wiki(
     let url =
         reqwest::Url::parse_with_params("https://en.wikipedia.org/w/api.php", params).unwrap();
 
+    debug!("URL: {}", url);
+
     if let Ok(res) = request.get(url).send().await {
         let data = res.json::<WikiQuery>().await;
 
@@ -53,6 +56,7 @@ pub async fn wiki(
             let mut options = Vec::new();
 
             for (label, value) in data.1.iter().zip(data.3.iter()) {
+                let value = value.replace("https://en.wikipedia.org/wiki/", "");
                 options.push(CreateSelectMenuOption::new(label, value));
             }
 
@@ -98,6 +102,8 @@ pub async fn wiki(
                         let request = &ctx.data().reqwest;
                         let url = format!("https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro&explaintext&redirects=1&titles={value}");
 
+                        debug!("URL: {}", url);
+
                         let get = request.get(url).send().await;
 
                         let res = match get {
@@ -106,9 +112,12 @@ pub async fn wiki(
                                 return Err("Failed to get data.".into());
                             }
                         };
+
                         let res = res.unwrap();
+                        debug!("Response: {:?}", res);
+
                         let data: QueryContainer = serde_json::from_str(&res).unwrap();
-                        //info!("{:?}", data);
+                        debug!("{:?}", data);
 
                         let data = data.query;
                         let embed = CreateEmbed::new()

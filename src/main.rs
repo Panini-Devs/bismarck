@@ -151,6 +151,7 @@ async fn main() {
                 status(),
                 // Owner commands
                 shutdown(),
+                register(),
             ],
             skip_checks_for_owners: true,
             event_handler: |context, event, framework, data| {

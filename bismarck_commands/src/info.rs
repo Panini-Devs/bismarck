@@ -1,7 +1,7 @@
 use std::sync::atomic::Ordering;
 
 use bismarck_core::{context::Context, error::Error};
-use bismarck_utilities::git::{get_current_branch, get_head_revision};
+use bismarck_utilities::git::{get_current_branch, get_head_revision, get_absolute_path};
 use git2::Repository;
 use poise::{serenity_prelude as serenity, CreateReply};
 
@@ -16,7 +16,7 @@ use serenity::{CreateEmbed, CreateEmbedAuthor, CreateEmbedFooter, PremiumType};
     category = "Info"
 )]
 pub async fn about(context: Context<'_>) -> Result<(), Error> {
-    let repo = Repository::open(env!("CARGO_MANIFEST_DIR"))?;
+    let repo = Repository::open(get_absolute_path())?;
 
     let version = env!("CARGO_PKG_VERSION").to_string();
     let codename = "Graf Zeppelin".to_string();
@@ -69,10 +69,11 @@ pub async fn about(context: Context<'_>) -> Result<(), Error> {
 
 /// Returns the account age of the selected user.
 #[poise::command(
+    rename = "userinfo",
     slash_command,
     prefix_command,
     required_bot_permissions = "SEND_MESSAGES",
-    aliases("userinfo", "ui"),
+    aliases("ui"),
     category = "Info"
 )]
 pub async fn user_info(
@@ -119,10 +120,12 @@ pub async fn user_info(
 
 /// Shows the user's avatars.
 #[poise::command(
+    rename = "avatar",
     prefix_command,
     slash_command,
     category = "Info",
-    required_bot_permissions = "SEND_MESSAGES"
+    required_bot_permissions = "SEND_MESSAGES",
+    aliases("av"),
 )]
 pub async fn user_avatars(
     context: Context<'_>,
@@ -171,10 +174,12 @@ pub async fn user_avatars(
 
 /// Returns the bot's stats.
 #[poise::command(
+    rename = "botstat",
     slash_command,
     prefix_command,
     category = "Info",
-    required_bot_permissions = "SEND_MESSAGES"
+    required_bot_permissions = "SEND_MESSAGES",
+    aliases("bs", "stats"),
 )]
 pub async fn bot_stat(context: Context<'_>) -> Result<(), Error> {
     let guild = context.guild().unwrap().id;
