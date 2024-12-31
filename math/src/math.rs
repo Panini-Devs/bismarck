@@ -1,399 +1,148 @@
-use std::iter::{self, Peekable};
+use fast_float::parse_partial;
 
-/*
-#[poise::command(
-    prefix_command,
-    slash_command,
-    category = "Math",
-    required_permissions = "SEND_MESSAGES",
-    aliases("calc", "eval"),
-    user_cooldown = 2
-)]
-pub async fn math(
-    context: Context<'_>,
-    #[description = "Expression to evaluate"] expr: String,
-) -> Result<(), Error> {
-    let toks = tokenize(&expr)?;
-    let ops = Parser::new(toks).parse()?;
-    match execute(ops)? {
-        Ret::I32(n) => todo!("Output i32"),
-        Ret::U32(n) => todo!("Output u32"),
-        Ret::F32(n) => todo!("Output f32"),
-    }
-    Ok(())
-}
-*/
+/// Struct describing a mathematical operator that takes two operands
+pub struct BinaryOperator<'a> {
+    /// The precedence of an determines where it is located in the priority chain.
+    ///
+    /// Multiplication has higher precedence than addition,
+    /// so multiplication happens before addition.
+    ///
+    /// A limitation is imposed: All unary operators have higher precedence than any binary operator
+    /// no matter how higher is the precedence value of the binary operator.
+    pub precedence: i32,
 
-mod eval {
-    use super::*;
+    /// The identifier of the operator, not limited to just one character.
+    /// A symbol can be defined as an operator, such that `5 and 1` would evaluate to `1`
+    /// (boolean addition)
+    pub identifier: &'a str,
 
-    #[allow(dead_code)]
-    fn p(s: &str) -> Value {
-        Parser::new(tokenize(s).unwrap().into_iter())
-            .parse()
-            .unwrap()
-    }
-
-    #[allow(unused_imports)]
-    mod test_u32 {
-        use super::*;
-
-        #[test]
-        fn add() {
-            assert_eq!(p("1_u + 2_u"), Value::U32(3));
-            // assert_eq!(p(&format!("{}_u + 1_u", u32::MAX)), Value::U32(0)); // will panic
-        }
-
-        #[test]
-        fn sub() {
-            assert_eq!(p("2_u - 1_u"), Value::U32(1));
-            // assert_eq!(p("0_u - 1_u"), Value::U32(u32::MAX)); // will panic
-        }
-
-        #[test]
-        fn mul() {
-            assert_eq!(p("2_u * 3_u"), Value::U32(6));
-        }
-
-        #[test]
-        fn div() {
-            assert_eq!(p("6_u / 2_u"), Value::U32(3));
-        }
-    }
-
-    #[allow(unused_imports)]
-    mod test_i32 {
-        use super::*;
-
-        #[test]
-        fn add() {
-            assert_eq!(p("1 + 2"), Value::I32(3));
-            assert_eq!(p(&format!("{}", i32::MAX)), Value::I32(i32::MAX));
-        }
-
-        #[test]
-        fn sub() {
-            assert_eq!(p("1 - 2"), Value::I32(-1));
-            // assert_eq!(p(&format!("{} - 2", i32::MIN + 1)), Value::I32(i32::MAX)); // will panic
-        }
-
-        #[test]
-        fn mul() {
-            assert_eq!(p("2 * 3"), Value::I32(6));
-        }
-
-        #[test]
-        fn div() {
-            assert_eq!(p("6 / 3"), Value::I32(2));
-        }
-    }
-
-    #[allow(unused_imports)]
-    mod test_f32 {
-        use super::*;
-
-        #[test]
-        fn add() {
-            assert_eq!(p("1.0 + 2.4"), Value::F32(3.4));
-        }
-
-        #[test]
-        fn sub() {
-            assert_eq!(p("1. - 2.0"), Value::F32(-1.));
-        }
-
-        #[test]
-        fn mul() {
-            assert_eq!(p("2.0 * 0.5"), Value::F32(1.));
-        }
-
-        #[test]
-        fn div() {
-            assert_eq!(p("6.0 / 0.5"), Value::F32(12.));
-        }
-    }
-
-    #[allow(unused_imports)]
-    mod test_pred {
-        use super::*;
-
-        #[test]
-        fn chain() {
-            assert_eq!(p("1 + 2 + 3"), Value::I32(6));
-        }
-
-        #[test]
-        fn mulsum() {
-            assert_eq!(p("2 + 3 * 4"), Value::I32(2 + 3 * 4));
-            assert_eq!(p("3 * 4 + 2"), Value::I32(3 * 4 + 2));
-        }
-
-        #[test]
-        fn div() {
-            assert_eq!(p("2 * 10 / 3"), Value::I32(2 * 10 / 3));
-            assert_eq!(p("4 / 2 / 2"), Value::I32(4 / 2 / 2));
-        }
-
-        #[test]
-        fn paren() {
-            assert_eq!(p("(2 + 3) * 4"), Value::I32((2 + 3) * 4));
-            assert_eq!(p("4 * (2 + 3)"), Value::I32(4 * (2 + 3)));
-        }
-    }
+    /// Operator application method
+    ///
+    /// # Arguments
+    ///
+    /// * `left_operand` - The number that appears at the left of the operator
+    /// * `right_operand` - The number that appears at the right of the operator
+    ///
+    /// # Returns
+    ///
+    /// Result of applying the operator to the two operands.
+    /// The return type is a `Result<f64, &'static str>` for the application may error,
+    /// for example in cases where division by zero happens.
+    pub apply: fn(left_operand: f64, right_operand: f64) -> Result<f64, &'static str>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum Value {
-    I32(i32),
-    F32(f32),
-    U32(u32),
+/// Struct describing a mathematical operator that takes one operand
+pub struct UnaryOperator {
+    /// Identifier of the operator
+    pub identifier: char,
+
+    /// Operator application method
+    ///
+    /// # Arguments
+    ///
+    /// * `operand` - Number to apply the operator to
+    ///
+    /// # Returns
+    ///
+    /// Result of applying the operator to the operand.
+    /// One common error to signal is overflow, for example, caused by `50!`.
+    pub apply: fn(operand: f64) -> Result<f64, &'static str>,
 }
 
-#[derive(PartialEq, Eq, Clone, Debug)]
-pub enum Type {
-    I32,
-    F32,
-    U32,
+/// Operator environment for a mathematical expression
+pub struct OperatorTable<'a> {
+    pub prefix: &'a [UnaryOperator],
+    pub infix: &'a [BinaryOperator<'a>],
 }
 
-// TODO: Make it checked so it doesn't panic
-macro_rules! mkbinop {
-    ($name:ident, $op:tt) => {
-	fn $name(self, other: Value) -> Result<Value, &'static str> {
-	    use Value as V;
-            match (self, other) {
-		(V::I32(l), V::I32(r)) => Ok(V::I32(l $op r)),
-		(V::U32(l), V::U32(r)) => Ok(V::U32(l $op r)),
-		(V::F32(l), V::F32(r)) => Ok(V::F32(l $op r)),
-		_ => Err("Type mismatch"),
-            }
-	}
-    }
+/// Result of evaluating a mathematical expression
+///
+/// # Grammar
+/// As of now, an expression is anything that complies with the following grammar
+/// ```
+/// expr: number
+///     | prefix_operator expr
+///     | '(' expr ')'
+///     | expr infix_operator expr
+///     ;
+///
+/// number: /* anything parseable by fast_float::parse_partial */
+///       ;
+/// ```
+type Value = f64;
+
+fn parse_number(data: &str) -> Option<(&str, Value)> {
+    parse_partial(data)
+        .map(|(num, readcount)| (&data[readcount..], num))
+        .ok()
 }
 
-impl Value {
-    fn cast(self, typ: Type) -> Result<Value, &'static str> {
-        use Type as T;
-        use Value as V;
-        Ok(match (self.clone(), typ) {
-            (V::I32(n), T::F32) => V::F32(n as f32),
-            (V::I32(n), T::U32) => {
-                if n < 0 {
-                    Err("Cannot convert negative number to unsigned")?
-                } else {
-                    V::U32(n as u32)
-                }
-            }
-            (V::I32(_), T::I32) => self,
-
-            (V::U32(n), T::F32) => V::F32(n as f32),
-            (V::U32(_), T::U32) => self,
-            (V::U32(n), T::I32) => {
-                if n > i32::MAX as u32 {
-                    Err("Number too big to fit in signed integer")?
-                } else {
-                    V::I32(n as i32)
-                }
-            }
-
-            (V::F32(_), T::F32) => self,
-            (V::F32(n), T::U32) => V::U32(n as u32),
-            (V::F32(n), T::I32) => V::I32(n as i32),
+fn parse_primary<'a>(data: &'a str, env: &OperatorTable) -> Option<(&'a str, Value)> {
+    data.chars()
+        .skip_while(|c| c.is_whitespace())
+        .next()
+        .and_then(|cur_char| {
+            env.prefix
+                .iter()
+                .find(|op| op.identifier == cur_char)
+                .and_then(|op| {
+                    parse_primary(&data[1..], env)
+                        .and_then(|(data, value)| (op.apply)(value).map(|v| (data, v)).ok())
+                })
+                .or_else(|| parse_number(data))
         })
-    }
-
-    fn neg(self) -> Result<Value, &'static str> {
-        use Value as V;
-        match self {
-            V::I32(n) => Ok(V::I32(-n)),
-            V::U32(_) => Err("Cannot negate unsigned value"),
-            V::F32(n) => Ok(V::F32(-n)),
-        }
-    }
-
-    mkbinop!(mul, *);
-    mkbinop!(add, +);
-    mkbinop!(sub, -);
-    mkbinop!(div, /);
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum Opc {
-    Plus,
-    Minus,
-    Star,
-    Slash,
+fn parse_op<'a>(
+    data: &'a str,
+    env: &'a OperatorTable,
+) -> Option<(&'a str, &'a BinaryOperator<'a>)> {
+    let data = &data[data.find(|c: char| !c.is_whitespace())?..];
+    let op = env.infix.iter().max_by_key(|op| {
+        op.identifier
+            .chars()
+            .zip(data.chars())
+            .take_while(|(a, b)| a == b)
+            .count()
+    })?;
+    Some((data, op))
 }
 
-impl Opc {
-    fn new(c: char) -> Option<Self> {
-        match c {
-            '+' => Some(Opc::Plus),
-            '-' => Some(Opc::Minus),
-            '*' => Some(Opc::Star),
-            '/' => Some(Opc::Slash),
-            _ => None,
-        }
-    }
-
-    // The precedence of the operator, higher means that operation has priority
-    fn pred(&self) -> i32 {
-        match self {
-            Opc::Plus => 0,
-            Opc::Minus => 0,
-            Opc::Star => 1,
-            Opc::Slash => 1,
-        }
-    }
-
-    // How one operator combines two values
-    fn apply(&self, l: Value, r: Value) -> Result<Value, &'static str> {
-        match self {
-            Opc::Plus => l.add(r),
-            Opc::Minus => l.sub(r),
-            Opc::Star => l.mul(r),
-            Opc::Slash => l.div(r),
-        }
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum Token {
-    Eof,
-    LParen,
-    RParen,
-    Operator(Opc),
-    Symbol(String),
-    I32(i32),
-    F32(f32),
-    Cast(Type),
-}
-
-// A simple lexer
-pub fn tokenize(input: &str) -> Result<Vec<Token>, &'static str> {
-    let mut it = input.chars().peekable();
-    let mut v: Vec<Token> = Vec::new();
-
-    while let Some(c) = it.next() {
-        match c {
-            _ if c.is_whitespace() => (),
-            _ if Opc::new(c).is_some() => v.push(Token::Operator(Opc::new(c).unwrap())),
-            '(' => v.push(Token::LParen),
-            ')' => v.push(Token::RParen),
-            '_' => match it.next() {
-                Some('i') => v.push(Token::Cast(Type::I32)),
-                Some('f') => v.push(Token::Cast(Type::F32)),
-                Some('u') => v.push(Token::Cast(Type::U32)),
-                _ => return Err("Invalid use of '_' (casting operator)"),
-            },
-            _ if c.is_ascii_digit() => {
-                let n: String = iter::once(c)
-                    .chain(iter::from_fn(|| {
-                        it.by_ref().next_if(|c| c.is_ascii_digit())
-                    }))
-                    .collect();
-                if it.next_if_eq(&'.').is_some() {
-                    let f: String = n
-                        .chars()
-                        .chain(iter::once('.'))
-                        .chain(iter::from_fn(|| {
-                            it.by_ref().next_if(|c| c.is_ascii_digit())
-                        }))
-                        .collect();
-                    match f.parse::<f32>() {
-                        Err(_) => return Err("Invalid float format"),
-                        Ok(f) => v.push(Token::F32(f)),
-                    }
-                } else {
-                    match n.parse::<i32>() {
-                        Err(_) => return Err("Number too big"),
-                        Ok(n) => v.push(Token::I32(n)),
-                    }
-                }
-            }
-            _ if c.is_alphabetic() => v.push(Token::Symbol(
-                iter::from_fn(|| it.by_ref().next_if(|c| c.is_alphanumeric())).collect(),
-            )),
-            _ => return Err("Invalid character"),
-        }
-    }
-    Ok(v)
-}
-
-// A recursive descent parser, see https://en.wikipedia.org/wiki/Recursive_descent_parser
-pub struct Parser<I: Iterator<Item = Token>> {
-    tokens: Peekable<I>,
-}
-
-impl<I: Iterator<Item = Token>> Parser<I> {
-    pub fn new(toks: I) -> Self {
-        Self {
-            tokens: toks.peekable(),
-        }
-    }
-
-    fn next(&mut self) -> Token {
-        self.tokens.next().unwrap_or(Token::Eof)
-    }
-
-    fn peek(&mut self) -> Token {
-        self.tokens.peek().cloned().unwrap_or(Token::Eof)
-    }
-
-    pub fn parse(mut self) -> Result<Value, &'static str> {
-        let p = self.primary()?;
-        let e = self.expression(p, 0)?;
-        match self.next() {
-            Token::Eof => Ok(e),
-            _ => Err("Expected end of input"),
-        }
-    }
-
-    // A pratt parser, see https://en.wikipedia.org/wiki/Operator-precedence_parser
-    fn expression(&mut self, mut lhs: Value, pred: i32) -> Result<Value, &'static str> {
-        loop {
-            let op = match self.peek() {
-                Token::Operator(op) if op.pred() >= pred => op,
-                _ => break,
-            };
-            self.next();
-
-            let mut rhs = self.primary()?;
-            loop {
-                let op2 = match self.peek() {
-                    Token::Operator(op2) if op2.pred() > op.pred() => op2,
-                    _ => break,
-                };
-                rhs = self.expression(rhs, op2.pred())?;
-                self.next();
-            }
-            lhs = op.apply(lhs, rhs)?;
-        }
-        Ok(lhs)
-    }
-
-    fn primary(&mut self) -> Result<Value, &'static str> {
-        let r = match self.next() {
-            Token::LParen => {
-                let p = self.primary()?;
-                let r = self.expression(p, 0)?;
-                match self.next() {
-                    Token::RParen => r,
-                    _ => Err("Expected ')'")?,
-                }
-            }
-            Token::Operator(Opc::Minus) => self.primary()?.neg()?,
-            Token::Operator(Opc::Plus) => self.primary()?,
-            Token::F32(n) => Value::F32(n),
-            Token::I32(n) => Value::I32(n),
-            _ => Err("Expected a value")?,
+fn parse_expression<'a>(
+    mut data: &'a str,
+    mut lhs: Value,
+    env: &'a OperatorTable,
+    pred: i32,
+) -> Option<(&'a str, Value)> {
+    loop {
+        let op;
+        (data, op) = match parse_op(data, env) {
+            Some((_, op)) if op.precedence < pred => break,
+            Some(t) => t,
+            None => break,
         };
-        Ok(match self.peek() {
-            Token::Cast(t) => {
-                self.next();
-                r.cast(t)?
-            }
-            _ => r,
-        })
+
+        let mut rhs;
+        (data, rhs) = parse_primary(data, env)?;
+        loop {
+            let op2;
+            (data, op2) = match parse_op(data, env) {
+                Some((_, op2)) if op2.precedence <= op.precedence => break,
+                Some(t) => t,
+                None => break,
+            };
+            (data, rhs) = parse_expression(data, rhs, env, op2.precedence)?;
+        }
+        lhs = (op.apply)(lhs, rhs).ok()?;
+    }
+    Some((data, lhs))
+}
+
+pub fn eval<'a>(data: &'a str, env: &'a OperatorTable) -> Option<Value> {
+    let (data, p) = parse_primary(data, env)?;
+    let (data, e) = parse_expression(data, p, env, 0)?;
+    match data.chars().find(|c| !c.is_whitespace()) {
+	None => Some(e),
+	Some(_) => None,
     }
 }
