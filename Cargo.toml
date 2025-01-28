@@ -62,7 +62,7 @@ duration-str = "0.12.0"
 
 futures = "^0.3.30"
 
-rand = "^0.8"
+rand = "^0.9"
 
 
 [profile.release]
